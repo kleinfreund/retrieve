@@ -1,0 +1,29 @@
+{
+	"compilerOptions": {
+		"baseUrl": ".",
+		"rootDir": ".",
+		"outDir": "dist",
+		"sourceMap": false,
+		"noEmit": true,
+		"target": "es2022",
+		"module": "es2022",
+		"moduleResolution": "node16",
+		"lib": [
+			"dom",
+			"dom.iterable",
+			"es2022"
+		],
+		"allowUnreachableCode": false,
+		"noImplicitAny": true,
+		"noImplicitReturns": true,
+		"noImplicitThis": true,
+		"noUncheckedIndexedAccess": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"strict": true,
+		"strictNullChecks": true,
+	},
+	"include": [
+		"./src/**/*.ts"
+	]
+}
