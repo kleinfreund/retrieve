@@ -1,6 +1,6 @@
 # retrieve
 
-[![Tests passing](https://github.com/kleinfreund/retrieve/workflows/tests/badge.svg)](https://github.com/kleinfreund/retrieve/actions)
+[![Tests passing](https://github.com/kleinfreund/retrieve/workflows/Tests/badge.svg)](https://github.com/kleinfreund/retrieve/actions)
 
 A convenience wrapper around fetch for the browser (well, anything that has `fetch` really).
 
