@@ -2,7 +2,7 @@
 	"name": "retrieve",
 	"version": "1.0.0",
 	"license": "MIT",
-	"description": "Wrapper around fetch",
+	"description": "A convenience wrapper around fetch",
 	"author": {
 		"name": "Philipp Rudloff",
 		"url": "https://kleinfreund.de"
