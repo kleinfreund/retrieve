@@ -4,15 +4,7 @@
 
 A convenience wrapper around fetch for the browser (well, anything that has `fetch` really).
 
-**Features** (see [Features](#features) for more detailed descriptions):
-
-- [sets the right “content-type” header based on the request body format](#request-content-type-guessing)
-- [serializes request bodies (JSON)](#request-body-serialization)
-- [deserializes response bodies (JSON, FormData, text)](#response-body-deserialization)
-- [returns a rejecting promise with a `ResponseError` for error responses](#returning-a-rejecting-promise-for-error-responses)
-- [supports interceptors that can implement error correcting logic](#interceptors)
-
-Why is it called `retrieve`? I wanted to call it `makeRequest` (I like clean and explicit names), but that already exists on npm. So I went with `retrieve` because that's similar to `fetch`.
+This package’s files are distributed in the ES module format and have not been transpiled.
 
 Links:
 
@@ -22,6 +14,16 @@ Links:
 - [**github.com**/kleinfreund/retrieve](https://github.com/kleinfreund/retrieve)
 	- [code of conduct](https://github.com/kleinfreund/retrieve/blob/main/CODE_OF_CONDUCT.md)
 	- [contributing guidelines](https://github.com/kleinfreund/retrieve/blob/main/CONTRIBUTING.md)
+
+**Features** (see [Features](#features) for more detailed descriptions):
+
+- [sets the right “content-type” header based on the request body format](#request-content-type-guessing)
+- [serializes request bodies (JSON)](#request-body-serialization)
+- [deserializes response bodies (JSON, FormData, text)](#response-body-deserialization)
+- [returns a rejecting promise with a `ResponseError` for error responses](#returning-a-rejecting-promise-for-error-responses)
+- [supports interceptors that can implement error correcting logic](#interceptors)
+
+Why is it called `retrieve`? I wanted to call it `makeRequest` (I like clean and explicit names), but that already exists on npm. So I went with `retrieve` because that's similar to `fetch`.
 
 ## Contents
 
