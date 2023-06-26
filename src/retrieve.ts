@@ -453,8 +453,6 @@ async function createRetrieveResponse(response: Response): Promise<RetrieveRespo
 		bodyType = 'text'
 	}
 
-	response.json
-
 	try {
 		const data = bodyType !== undefined ? await response[bodyType]() : null
 
