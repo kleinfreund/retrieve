@@ -165,15 +165,15 @@ Processed right before a request is sent (i.e. before calling `fetch`). Allows m
 
 ```js
 const config = {
-  url: 'https://api.example.org',
-  beforeRequestHandlers: [
-    (url, init) => {
-      const url = import.meta.env.MODE === 'development'
-        ? new URL('http://localhost:1234/api')
-        : url
-      return [url, init]
-    },
-  ],
+	url: 'https://api.example.org',
+	beforeRequestHandlers: [
+		(url, init) => {
+			const url = import.meta.env.MODE === 'development'
+				? new URL('http://localhost:1234/api')
+				: url
+			return [url, init]
+		},
+	],
 }
 ```
 
@@ -194,15 +194,15 @@ Returning a result object with the corrected status and a `Response` object allo
 
 ```js
 const config = {
-  url: 'https://api.example.org',
-  requestErrorHandlers: [
-    async (requestError, url, init) => {
-      // Do something to fix the error cause
-      const response = await fetch(url, init)
+	url: 'https://api.example.org',
+	requestErrorHandlers: [
+		async (requestError, url, init) => {
+			// Do something to fix the error cause
+			const response = await fetch(url, init)
 
-        return { status: 'corrected', value: response }
-    },
-  ],
+			return { status: 'corrected', value: response }
+		},
+	],
 }
 ```
 
@@ -212,15 +212,15 @@ Returning a result object with the maintained status and an `Error` object makes
 
 ```js
 const config = {
-  url: 'https://api.example.org',
-  requestErrorHandlers: [
-    (requestError, url, init) => {
-      // Do something with requestError
-      requestError.message = 'ERR: ' + requestError.message
+	url: 'https://api.example.org',
+	requestErrorHandlers: [
+		(requestError, url, init) => {
+			// Do something with requestError
+			requestError.message = 'ERR: ' + requestError.message
 
-      return { status: 'maintained', value: requestError }
-    },
-  ],
+			return { status: 'maintained', value: requestError }
+		},
+	],
 }
 ```
 
@@ -234,13 +234,13 @@ Exceptions during the processing of a response success handler are not caught.
 
 ```js
 const config = {
-  url: 'https://api.example.org',
-  responseErrorHandlers: [
-    async (retrieveResponse, url, init) => {
-      // Do something with retrieveResponse
-      return retrieveResponse
-    },
-  ],
+	url: 'https://api.example.org',
+	responseErrorHandlers: [
+		async (retrieveResponse, url, init) => {
+			// Do something with retrieveResponse
+			return retrieveResponse
+		},
+	],
 }
 ```
 
@@ -261,19 +261,19 @@ Returning a result object with the corrected status and a `Response` object allo
 
 ```js
 const config = {
-  url: 'https://api.example.org',
-  responseErrorHandlers: [
-    async (responseError, retrieveResponse, url, init) => {
-      if (responseError.response.status === 401) {
-        // Do something to fix the error cause (e.g. refresh the user's session)
-        const response = await fetch(url, init)
+	url: 'https://api.example.org',
+	responseErrorHandlers: [
+		async (responseError, retrieveResponse, url, init) => {
+			if (responseError.response.status === 401) {
+				// Do something to fix the error cause (e.g. refresh the user's session)
+				const response = await fetch(url, init)
 
-        return { status: 'corrected', value: response }
-      }
+				return { status: 'corrected', value: response }
+			}
 
-      return { status: 'maintained', value: responseError }
-    },
-  ],
+			return { status: 'maintained', value: responseError }
+		},
+	],
 }
 ```
 
@@ -283,15 +283,15 @@ Returning a result object with the maintained status and an `ResponseError` obje
 
 ```js
 const config = {
-  url: 'https://api.example.org',
-  responseErrorHandlers: [
-    async (responseError, retrieveResponse, url, init) => {
-      // Do something with responseError
-      responseError.message = 'ERR: ' + responseError.message
+	url: 'https://api.example.org',
+	responseErrorHandlers: [
+		async (responseError, retrieveResponse, url, init) => {
+			// Do something with responseError
+			responseError.message = 'ERR: ' + responseError.message
 
-      return { status: 'maintained', value: responseError }
-    },
-  ],
+			return { status: 'maintained', value: responseError }
+		},
+	],
 }
 ```
 
