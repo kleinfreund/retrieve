@@ -1,4 +1,5 @@
 declare class ResponseError extends Error {
+    name: string;
     response: Response;
     constructor(response: Response, message?: string, options?: {
         cause?: unknown;
