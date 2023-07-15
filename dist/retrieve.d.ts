@@ -65,7 +65,7 @@ interface RetrieveConfig {
     /**
      * Message for response errors.
      *
-     * **Default**: `'Unknown response error'`
+     * **Default**: `$statusCode $statusText` (e.g. `'404 Not Found'`)
      */
     responseErrorMessage?: string;
     /**

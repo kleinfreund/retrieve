@@ -147,7 +147,7 @@ If set, it overrides the underlying error's own message which will then be set o
 
 ##### `responseErrorMessage` (optional)
 
-**Default**: `'Unknown response error'`
+**Default**: `$statusCode $statusText` (e.g. `'404 Not Found'`)
 
 Message for response errors.
 

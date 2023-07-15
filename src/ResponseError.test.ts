@@ -27,18 +27,18 @@ describe('ResponseError', () => {
 	test.each([
 		[
 			undefined,
-			'Unknown response error',
+			'200 OK',
 		],
 		[
 			'',
-			'Unknown response error',
+			'200 OK',
 		],
 		[
 			'Error message',
 			'Error message',
 		],
 	])('has the expected message', (message, expectedMessage) => {
-		const responseError = new ResponseError(new Response(), message)
+		const responseError = new ResponseError(new Response(undefined, { status: 200, statusText: 'OK' }), message)
 
 		expect(responseError.message).toBe(expectedMessage)
 	})

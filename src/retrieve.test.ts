@@ -618,19 +618,19 @@ describe('retrieve', () => {
 					function () {
 						const response = new Response('Oopsie!', {
 							status: 400,
-							statusText: 'Bad, bad request',
+							statusText: 'Bad Request',
 						})
 
 						return Promise.resolve(response)
 					},
-					new Error('Unknown response error'),
+					new Error('400 Bad Request'),
 				],
 				[
 					'plain/text',
 					function () {
 						const response = new Response('Oopsie!', {
 							status: 400,
-							statusText: 'Bad, bad request',
+							statusText: 'Bad Request',
 							headers: {
 								'content-type': 'plain/text',
 							},
@@ -638,14 +638,14 @@ describe('retrieve', () => {
 
 						return Promise.resolve(response)
 					},
-					new Error('Unknown response error'),
+					new Error('400 Bad Request'),
 				],
 				[
 					'application/json',
 					function () {
 						const response = new Response('{"error":"oh no"}', {
 							status: 400,
-							statusText: 'Bad, bad request',
+							statusText: 'Bad Request',
 							headers: {
 								'content-type': 'application/json',
 							},
@@ -653,14 +653,14 @@ describe('retrieve', () => {
 
 						return Promise.resolve(response)
 					},
-					new Error('Unknown response error'),
+					new Error('400 Bad Request'),
 				],
 				[
 					'application/json; charset=utf-8',
 					function () {
 						const response = new Response('{"error":"oh no"}', {
 							status: 400,
-							statusText: 'Bad, bad request',
+							statusText: 'Bad Request',
 							headers: {
 								'content-type': 'application/json; charset=utf-8',
 							},
@@ -668,14 +668,14 @@ describe('retrieve', () => {
 
 						return Promise.resolve(response)
 					},
-					new Error('Unknown response error'),
+					new Error('400 Bad Request'),
 				],
 				[
 					'application/problem+json; charset=utf-8',
 					function () {
 						const response = new Response('{"error":"oh no"}', {
 							status: 400,
-							statusText: 'Bad, bad request',
+							statusText: 'Bad Request',
 							headers: {
 								'content-type': 'application/problem+json; charset=utf-8',
 							},
@@ -683,7 +683,7 @@ describe('retrieve', () => {
 
 						return Promise.resolve(response)
 					},
-					new Error('Unknown response error'),
+					new Error('400 Bad Request'),
 				],
 			])('handles content-type %s', async (_title: string, fetchMock: typeof fetch, expectedError: Error) => {
 				vi.spyOn(global, 'fetch').mockImplementation(fetchMock)
