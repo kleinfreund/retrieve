@@ -366,6 +366,87 @@ async function example() {
 example()
 ```
 
+### Example 4: submitting form data (POST)
+
+**Warning**: This is an educational example only. As it stands, a plain HTML `form` element without any JavaScript will handle such a use case just fine and do a better job of it. No need for `retrieve`.
+
+```html
+<form method="post">
+	<label>
+		Name
+		<input type="text" name="name" value="value">
+	</label>
+
+	<label>
+		Age
+		<input type="number" name="age" value="0">
+	</label>
+
+	<label>
+		File
+		<input type="file" name="file">
+	</label>
+
+	<button>Submit</button>
+</form>
+```
+
+```js
+const form = document.querySelector('form')
+
+form.addEventListener('submit', function (event) {
+	event.preventDefault()
+
+	const form = event.target
+
+	retrieve({
+		url: form.action,
+		data: new FormData(form),
+		init: {
+			method: form.method,
+		},
+	})
+})
+```
+
+### Example 5: submitting form data (GET)
+
+**Warning**: This is an educational example only. As it stands, a plain HTML `form` element without any JavaScript will handle such a use case just fine and do a better job of it. No need for `retrieve`.
+
+```html
+<form>
+	<label>
+		Name
+		<input type="text" name="name" value="value">
+	</label>
+
+	<label>
+		Age
+		<input type="number" name="age" value="0">
+	</label>
+
+	<button>Submit</button>
+</form>
+```
+
+```js
+const form = document.querySelector('form')
+
+form.addEventListener('submit', function (event) {
+	event.preventDefault()
+
+	const form = event.target
+
+	retrieve({
+		url: form.action,
+		params: new URLSearchParams(new FormData(form)),
+		init: {
+			method: form.method,
+		},
+	})
+})
+```
+
 ## Features
 
 ### Request content type guessing

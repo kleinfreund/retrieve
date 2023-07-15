@@ -4,6 +4,9 @@
 		parser: '@typescript-eslint/parser',
 		sourceType: 'module',
 	},
+	env: {
+		browser: true,
+	},
 	plugins: ['@typescript-eslint'],
 	extends: [
 		'eslint:recommended',

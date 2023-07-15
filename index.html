@@ -9,20 +9,46 @@
 </head>
 
 <body>
-	<main id="app" style="display: flex; justify-content: center;">
-		<form method="get" action="/" enctype="application/x-www-form-urlencoded">
-			<input type="text" id="name" name="name" value="value">
-			<input type="number" id="number" name="number" value="0">
-			<button type="submit">Submit</button>
+	<main>
+		<h2>Form (GET)</h2>
+
+		<form>
+			<label>
+				Name
+				<input type="text" name="name" value="value">
+			</label>
+
+			<label>
+				Age
+				<input type="number" name="age" value="0">
+			</label>
+
+			<button>Submit</button>
+		</form>
+
+		<h2>Form (POST)</h2>
+
+		<form method="post">
+			<label>
+				Name
+				<input type="text" name="name" value="value">
+			</label>
+
+			<label>
+				Age
+				<input type="number" name="age" value="0">
+			</label>
+
+			<label>
+				File
+				<input type="file" name="file">
+			</label>
+
+			<button>Submit</button>
 		</form>
 	</main>
 
-	<script type="module">
-		import { retrieve, ResponseError } from './dist/retrieve.js'
-
-		Object.defineProperty(window, 'retrieve', { value: retrieve })
-		Object.defineProperty(window, 'ResponseError', { value: ResponseError })
-	</script>
+	<script src="index.js" type="module"></script>
 </body>
 
 </html>
