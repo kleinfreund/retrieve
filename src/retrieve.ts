@@ -381,16 +381,16 @@ function createInit(config: RetrieveConfig): RequestInit {
 	if ('data' in config) {
 		const contentType = headers.get(CONTENT_TYPE)
 
-		if (contentType?.startsWith(CONTENT_TYPE_JSON) || (contentType === null && !['GET', 'HEAD'].includes(init.method))) {
-			bodyType = 'json'
-		} else if (typeof config.data === 'string') {
-			bodyType = 'text'
-		} else if (config.data instanceof ArrayBuffer) {
+		if (config.data instanceof ArrayBuffer) {
 			bodyType = 'arrayBuffer'
 		} else if (config.data instanceof Blob) {
 			bodyType = 'blob'
 		} else if (config.data instanceof FormData) {
 			bodyType = 'formData'
+		} else if (contentType?.startsWith(CONTENT_TYPE_JSON) || (contentType === null && !['GET', 'HEAD'].includes(init.method))) {
+			bodyType = 'json'
+		} else if (typeof config.data === 'string') {
+			bodyType = 'text'
 		}
 	}
 

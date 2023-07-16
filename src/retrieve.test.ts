@@ -207,13 +207,29 @@ describe('retrieve', () => {
 						},
 					],
 					[
-						'FormData data sets content-type multipart/form-data',
+						'FormData data sets content-type multipart/form-data (GET)',
 						{
 							url: 'http://example.org',
 							data: new FormData(),
 						} satisfies RetrieveConfig,
 						{
 							method: 'GET',
+							headers: new Headers({
+								'x-requested-with': 'XMLHttpRequest',
+								// Note: No “content-type” header is expected here as the browser will set it automatically for `FormData` request bodies.
+							}),
+							body: new FormData(),
+						},
+					],
+					[
+						'FormData data sets content-type multipart/form-data (POST)',
+						{
+							url: 'http://example.org',
+							init: { method: 'post' },
+							data: new FormData(),
+						} satisfies RetrieveConfig,
+						{
+							method: 'POST',
 							headers: new Headers({
 								'x-requested-with': 'XMLHttpRequest',
 								// Note: No “content-type” header is expected here as the browser will set it automatically for `FormData` request bodies.
