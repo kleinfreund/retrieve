@@ -365,24 +365,21 @@ function createUrl(config: RetrieveConfig): URL {
 }
 
 function createInit(config: RetrieveConfig): RequestInit {
-	const originalInit: RequestInit = config.init ?? {}
+	const originalInit = config.init ?? {}
 	const init: RequestInit = { ...originalInit }
 
 	// Process request method
 	init.method = (originalInit.method ?? 'GET').toUpperCase()
 
 	// Process request headers
-	const headers = originalInit.headers instanceof Headers
-		? originalInit.headers
-		: new Headers(originalInit.headers)
-
-	headers.set('x-requested-with', 'XMLHttpRequest')
+	init.headers = new Headers(originalInit.headers)
+	init.headers.set('x-requested-with', 'XMLHttpRequest')
 
 	// Determines request body type
 	let bodyType: BodyType | undefined
 
 	if ('data' in config) {
-		const contentType = headers.get(CONTENT_TYPE)
+		const contentType = init.headers.get(CONTENT_TYPE)
 
 		if (config.data instanceof ArrayBuffer) {
 			bodyType = 'arrayBuffer'
@@ -404,14 +401,12 @@ function createInit(config: RetrieveConfig): RequestInit {
 			 *
 			 * Source: https://developer.mozilla.org/en-US/docs/Web/API/FormData/Using_FormData_Objects#sending_files_using_a_formdata_object
 			 */
-			headers.delete(CONTENT_TYPE)
-		} else if (!headers.has(CONTENT_TYPE)) {
+			init.headers.delete(CONTENT_TYPE)
+		} else if (!init.headers.has(CONTENT_TYPE)) {
 			// Sets the content type if not already set explicitly.
-			headers.set(CONTENT_TYPE, CONTENT_TYPES[bodyType])
+			init.headers.set(CONTENT_TYPE, CONTENT_TYPES[bodyType])
 		}
 	}
-
-	init.headers = headers
 
 	// Process request body
 	if ('data' in config) {
