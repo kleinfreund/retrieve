@@ -38,10 +38,13 @@ interface RetrieveConfig {
      * The following changes are made to the `init` object before it is passed to `fetch` (but without changing `config.init`):
      *
      * - **Headers**: If no “content-type” header is set, it is determined automatically where appropriate:
+     *
      *   - “application/octet-stream” if `config.data` is an `ArrayBuffer` of `Blob` object
      *   - “plain/text” if `config.data` is a string
      *   - “application/json” if `config.data` is set and the request method isn't GET or HEAD
-     * - **Body**: If `config.data` is set, it will be used for `init.body`. See `config.data` description for more information.
+     *
+     *   Note that if `config.data` is set to a `FormData` object, an existing content type **will be removed**. Read the warning on [MDN: Using FormData Objects: Sending files using a FormData object](https://developer.mozilla.org/en-US/docs/Web/API/FormData/Using_FormData_Objects#sending_files_using_a_formdata_object) for an explanation.
+     * - **Body**: If `config.data` is set, it will be used for `init.body`. See `config.data` description for more information. Otherwise, if `config.init.body` is set, it will be used for fetch's `init.body`.
      * - **Signal**: If `config.timeout` is set to a positive number, it will be used to create `init.signal` using `AbortSignal.timeout(config.timeout)`.
      */
     init?: RequestInit;
