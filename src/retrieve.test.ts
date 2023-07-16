@@ -78,6 +78,52 @@ describe('retrieve', () => {
 		})
 
 		describe('init', () => {
+			test('config.init parameters are passed to fetch', async () => {
+				vi.spyOn(global, 'fetch').mockImplementation((...fetchParams: OriginalFetchParams) => {
+					assertInitEquality(fetchParams[1], {
+						body: 'body',
+						cache: 'default',
+						credentials: 'same-origin',
+						headers: new Headers({
+							'x-test-header': 'header-value',
+							'x-requested-with': 'XMLHttpRequest',
+						}),
+						integrity: 'hash',
+						keepalive: true,
+						method: 'POST',
+						mode: 'same-origin',
+						redirect: 'follow',
+						referrer: 'ref',
+						signal: null,
+						window: null,
+					})
+
+					return Promise.resolve(new Response('OK'))
+				})
+
+				await retrieve({
+					url: 'http://example.org',
+					init: {
+						body: 'body',
+						cache: 'default',
+						credentials: 'same-origin',
+						headers: {
+							'x-test-header': 'header-value',
+						},
+						integrity: 'hash',
+						keepalive: true,
+						method: 'POST',
+						mode: 'same-origin',
+						redirect: 'follow',
+						referrer: 'ref',
+						signal: null,
+						window: null,
+					},
+				})
+
+				expect(global.fetch).toHaveBeenCalled()
+			})
+
 			describe('method', () => {
 				test.each([
 					[

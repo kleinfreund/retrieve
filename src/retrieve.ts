@@ -363,7 +363,7 @@ function createUrl(config: RetrieveConfig): URL {
 
 function createInit(config: RetrieveConfig): RequestInit {
 	const originalInit: RequestInit = config.init ?? {}
-	const init: RequestInit = {}
+	const init: RequestInit = { ...originalInit }
 
 	// Process request method
 	init.method = (originalInit.method ?? 'GET').toUpperCase()
