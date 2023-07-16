@@ -27,7 +27,7 @@ Why is it called `retrieve`? I wanted to call it `makeRequest` (I like clean and
 
 ## Contents
 
-- [Installation & usage](#installation-&-usage)
+- [Installation & usage](#installation--usage)
 	- [As npm package](#as-npm-package)
 	- [As plain JS file](#as-plain-js-file)
 - [Documentation](#documentation)
