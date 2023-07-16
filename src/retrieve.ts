@@ -306,7 +306,7 @@ export async function retrieve(config: RetrieveConfig): Promise<RetrieveResponse
 		}
 
 		// We assume that the request interceptors have corrected an error if `response` was set, so let's only throw the request error if that wasn't done.
-		if (response === undefined) {
+		if (!response) {
 			throw requestError
 		}
 	}
@@ -416,7 +416,7 @@ function createInit(config: RetrieveConfig): RequestInit {
 		init.body = originalInit.body
 	}
 
-	if (config.timeout !== undefined && config.timeout > 0 && !('signal' in init)) {
+	if (config.timeout && !('signal' in init)) {
 		init.signal = AbortSignal.timeout(config.timeout)
 	}
 
@@ -426,16 +426,16 @@ function createInit(config: RetrieveConfig): RequestInit {
 function createRequestError(error: unknown, requestErrorMessage?: string): Error {
 	const requestError = error instanceof Error ? error : new Error()
 
-	if (requestError.message !== '') {
+	if (requestError.message) {
 		requestError.cause = requestError.message
 	}
 
 	// Overrides error message only if one is explicitly provided.
 	if (requestErrorMessage) {
 		requestError.message = requestErrorMessage
-	} else if (typeof error === 'string' && error.length > 0) {
+	} else if (typeof error === 'string' && error !== '') {
 		requestError.message = error
-	} else if (requestError.message === '') {
+	} else if (!requestError.message) {
 		requestError.message = 'Unknown request error'
 	}
 
@@ -455,7 +455,7 @@ async function createRetrieveResponse(response: Response): Promise<RetrieveRespo
 	}
 
 	try {
-		const data = bodyType !== undefined ? await response[bodyType]() : null
+		const data = bodyType ? await response[bodyType]() : null
 
 		return { response, data }
 	} catch (err) {
