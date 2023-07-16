@@ -373,7 +373,10 @@ function createInit(config: RetrieveConfig): RequestInit {
 
 	// Process request headers
 	init.headers = new Headers(originalInit.headers)
-	init.headers.set('x-requested-with', 'XMLHttpRequest')
+
+	if (!init.headers.has('x-request-with')) {
+		init.headers.set('x-requested-with', 'XMLHttpRequest')
+	}
 
 	// Determines request body type
 	let bodyType: BodyType | undefined
