@@ -397,18 +397,16 @@ function createInit(config: RetrieveConfig): RequestInit {
 		}
 	}
 
-	if (bodyType !== undefined) {
-		if (bodyType === 'formData') {
-			/**
-			 * The content type shouldn't be explicitly set for requests with a `FormData` body because the browser will otherwise not add the form data boundry to the content type header (e.g. “multipart/form-data; boundary=...”),
-			 *
-			 * Source: https://developer.mozilla.org/en-US/docs/Web/API/FormData/Using_FormData_Objects#sending_files_using_a_formdata_object
-			 */
-			init.headers.delete(CONTENT_TYPE)
-		} else if (!init.headers.has(CONTENT_TYPE)) {
-			// Sets the content type if not already set explicitly.
-			init.headers.set(CONTENT_TYPE, CONTENT_TYPES[bodyType])
-		}
+	if (bodyType === 'formData') {
+		/**
+		 * The content type shouldn't be explicitly set for requests with a `FormData` body because the browser will otherwise not add the form data boundry to the content type header (e.g. “multipart/form-data; boundary=...”),
+		 *
+		 * Source: https://developer.mozilla.org/en-US/docs/Web/API/FormData/Using_FormData_Objects#sending_files_using_a_formdata_object
+		 */
+		init.headers.delete(CONTENT_TYPE)
+	} else if (bodyType && !init.headers.has(CONTENT_TYPE)) {
+		// Sets the content type if not already set explicitly.
+		init.headers.set(CONTENT_TYPE, CONTENT_TYPES[bodyType])
 	}
 
 	// Process request body
