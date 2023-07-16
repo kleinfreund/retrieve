@@ -413,6 +413,8 @@ function createInit(config: RetrieveConfig): RequestInit {
 	// Process request body
 	if ('data' in config) {
 		init.body = bodyType === 'json' ? JSON.stringify(config.data) : config.data
+	} else if ('body' in originalInit) {
+		init.body = originalInit.body
 	}
 
 	if (config.timeout !== undefined && config.timeout > 0 && !('signal' in init)) {

@@ -377,6 +377,25 @@ describe('retrieve', () => {
 							body: 'Hello, server!',
 						},
 					],
+					[
+						'Plain text value (in `config.init.body`)',
+						{
+							url: 'http://example.org',
+							init: {
+								method: 'POST',
+								headers: new Headers({ 'content-type': 'plain/text' }),
+								body: 'Hello, server!',
+							},
+						},
+						{
+							method: 'POST',
+							headers: new Headers({
+								'x-requested-with': 'XMLHttpRequest',
+								'content-type': 'plain/text',
+							}),
+							body: 'Hello, server!',
+						},
+					],
 				])('%s', async (_title: string, config: RetrieveConfig, expectedInit: OriginalFetchParams[1]) => {
 					vi.spyOn(global, 'fetch').mockImplementation((...fetchParams: OriginalFetchParams) => {
 						assertInitEquality(fetchParams[1], expectedInit)
