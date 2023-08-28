@@ -325,7 +325,7 @@ const config = {
 
 A `Promise` that resolves to a `RetrieveResponse` object.
 
-A `RetrieveResponse` object
+A `RetrieveResponse` object.
 
 ### Exceptions
 
