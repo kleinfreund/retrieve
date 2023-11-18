@@ -247,4 +247,4 @@ type ResponseSuccessHandler = (responseObj: RetrieveResponse) => RetrieveRespons
 type ResponseErrorHandler = (responseError: ResponseError, responseObj: RetrieveResponse | undefined, ...fetchParams: RetrieveFetchParams) => ErrorHandlerResult<ResponseError> | Promise<ErrorHandlerResult<ResponseError>>;
 declare function retrieve(config: RetrieveConfig): Promise<RetrieveResponse>;
 
-export { BeforeRequestHandler, ErrorCorrectedResult, ErrorMaintainedResult, RequestErrorHandler, ResponseError, ResponseErrorHandler, ResponseSuccessHandler, RetrieveConfig, RetrieveFetchParams, RetrieveResponse, retrieve };
+export { type BeforeRequestHandler, type ErrorCorrectedResult, type ErrorMaintainedResult, type RequestErrorHandler, ResponseError, type ResponseErrorHandler, type ResponseSuccessHandler, type RetrieveConfig, type RetrieveFetchParams, type RetrieveResponse, retrieve };
