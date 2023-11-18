@@ -36,5 +36,4 @@
 	],
 }
 
-/* eslint-env node */
-module.exports = options
+export default options
