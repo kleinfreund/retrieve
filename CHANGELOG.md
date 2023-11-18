@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/kleinfreund/retrieve/compare/v1.1.0...v1.1.1) (2023-11-18)
+
+
+### Bug Fixes
+
+* overriding x-requested-with header ([f9d32d4](https://github.com/kleinfreund/retrieve/commit/f9d32d4fbc8cd5d4b7104c868eac12421c7f27f6))
+
 # [1.1.0](https://github.com/kleinfreund/retrieve/compare/v1.0.0...v1.1.0) (2023-07-16)
 
 
