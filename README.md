@@ -161,7 +161,7 @@ Request body data.
 If `config.data` is set:
 
 - … and the “content-type” header is “application/json”, `init.body` is set to the result of `JSON.stringify(config.data)`
-- … otherwise, `init.body` is set to `config.data`. It's your responsibility to make sure `config.data` can used on `init.body` (see [fetch() global function: parameters](https://developer.mozilla.org/en-US/docs/Web/API/fetch#parameters)).
+- … otherwise, `init.body` is set to `config.data`. It's your responsibility to make sure `config.data` can be used on `init.body` (see [fetch() global function: parameters](https://developer.mozilla.org/en-US/docs/Web/API/fetch#parameters)).
 
 ##### `requestErrorMessage` (optional)
 
@@ -325,8 +325,6 @@ const config = {
 
 A `Promise` that resolves to a `RetrieveResponse` object.
 
-A `RetrieveResponse` object.
-
 ### Exceptions
 
 #### `TypeError`
@@ -397,7 +395,7 @@ example()
 **Warning**: This is an educational example only. As it stands, a plain HTML `form` element without any JavaScript will handle such a use case just fine and do a better job of it. No need for `retrieve`.
 
 ```html
-<form method="post">
+<form method="POST" enctype="multipart/form-data">
 	<label>
 		Name
 		<input type="text" name="name" value="value">
