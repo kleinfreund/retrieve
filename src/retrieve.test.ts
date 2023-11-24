@@ -655,12 +655,12 @@ describe('retrieve', () => {
 
 				const { data, response } = await retrieve({ url: 'http://example.org' })
 
-				// For some reason, the `FormData` object created using `Response.prototype.formData()` has a different structure than `new FormData()` and, worse, fails “formData instanceof FormData”. The following is an extremely poor workaround to this problem.
-				// @ts-expect-error things are hard-enough as it is
-				const dataA = data?.constructor.name === 'FormData' ? Array.from(data.entries()) : data
-				// @ts-expect-error things are hard-enough as it is
-				const dataB = expectedData?.constructor.name === 'FormData' ? Array.from(expectedData.entries()) : expectedData
-				expect(dataA).toEqual(dataB)
+				function getData(data: unknown) {
+					// For some reason, the `FormData` object created using `Response.prototype.formData()` in this test environment has a different structure than `new FormData()` and, worse, fails “formData instanceof FormData”. The following is an extremely poor workaround to this problem: As long as I can find an `entries` method on `data`, I can convert `data` into an array of entries and compare it with the expected data.
+					return data && typeof data === 'object' && 'entries' in data && typeof data?.entries === 'function' ? Array.from(data.entries()) : data
+				}
+
+				expect(getData(data)).toEqual(getData(expectedData))
 				expect(response).toEqual(expect.objectContaining(expectedPartialResponse))
 			})
 
