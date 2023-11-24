@@ -29,8 +29,6 @@
 		},
 		"./dist/retrieve.d.ts": "./dist/retrieve.d.ts"
 	},
-	"main": "./dist/retrieve.js",
-	"module": "./dist/retrieve.js",
 	"types": "./dist/retrieve.d.ts",
 	"files": [
 		"dist/retrieve.d.ts",
