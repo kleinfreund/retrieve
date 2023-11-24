@@ -1,3 +1,20 @@
+import { readFileSync } from 'node:fs'
+
+const commitPartial = readFileSync('./changelog-template-commit.hbs', { encoding: 'utf-8' })
+
+/**
+ * Adds the commit body line by line so I can add it with the correct indentation in `changelog-template-commit.hbs`.
+ */
+function finalizeContext(context) {
+	for (const commitGroup of context.commitGroups) {
+		for (const commit of commitGroup.commits) {
+			commit.bodyLines = commit.body?.split('\n').filter((line) => line !== '') ?? []
+		}
+	}
+
+	return context
+}
+
 /** @type {import('semantic-release').Options} */ const options = {
 	branches: [
 		'main',
@@ -11,6 +28,10 @@
 		// https://github.com/semantic-release/release-notes-generator
 		['@semantic-release/release-notes-generator', {
 			preset: 'conventionalcommits',
+			writerOpts: {
+				commitPartial,
+				finalizeContext,
+			},
 		}],
 
 		// This creates/updates the CHANGELOG.md file.
