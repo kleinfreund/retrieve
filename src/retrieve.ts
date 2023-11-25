@@ -312,11 +312,11 @@ export async function retrieve(config: RetrieveConfig): Promise<RetrieveResponse
 
 	let retrieveResponse = await createRetrieveResponse(response)
 
-	for (const responseSuccessHandler of config.responseSuccessHandlers ?? []) {
-		retrieveResponse = await responseSuccessHandler(retrieveResponse)
-	}
-
 	if (retrieveResponse.response.ok) {
+		for (const responseSuccessHandler of config.responseSuccessHandlers ?? []) {
+			retrieveResponse = await responseSuccessHandler(retrieveResponse)
+		}
+
 		return retrieveResponse
 	}
 
