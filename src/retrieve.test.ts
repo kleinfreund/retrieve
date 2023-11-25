@@ -955,6 +955,22 @@ describe('retrieve', () => {
 					} satisfies RetrieveConfig,
 					'test',
 				],
+				[
+					{
+						url: 'http://example.org',
+						responseSuccessHandlers: [
+							(retrieveResponse) => {
+								retrieveResponse.data = 'test'
+								return Promise.resolve(retrieveResponse)
+							},
+							(retrieveResponse) => {
+								retrieveResponse.data = 'overridden data'
+								return Promise.resolve(retrieveResponse)
+							},
+						],
+					} satisfies RetrieveConfig,
+					'overridden data',
+				],
 			])('onResponseSuccess handlers produce response', async (config: RetrieveConfig, expectedData: unknown) => {
 				vi.spyOn(global, 'fetch').mockImplementation(() => Promise.resolve(new Response('OK')))
 
