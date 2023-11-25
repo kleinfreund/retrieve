@@ -280,7 +280,6 @@ export async function retrieve(config: RetrieveConfig): Promise<RetrieveResponse
 	const url = createUrl(config)
 	const init = createInit(config)
 
-	// Process request interceptors' `onBeforeRequest` handlers
 	let fetchParams: RetrieveFetchParams = [url, init]
 	for (const beforeRequestHandler of config.beforeRequestHandlers ?? []) {
 		fetchParams = await beforeRequestHandler(...fetchParams)
@@ -293,27 +292,26 @@ export async function retrieve(config: RetrieveConfig): Promise<RetrieveResponse
 	} catch (error) {
 		let requestError = createRequestError(error, config.requestErrorMessage)
 
-		// Process request interceptors' `onRequestError` handlers
 		for (const requestErrorHandler of config.requestErrorHandlers ?? []) {
 			const result = await requestErrorHandler(requestError, ...fetchParams)
 			if (result.status === 'corrected') {
 				response = result.value
-				// At this point, the previously executed request error handler is considered to have *correct the error state* (by returning a new `Response` object). Thus we stop processing any further request error handlers.
+				// At this point, the current request error handler has corrected the error state (by returning a new `Response` object) and we stop processing any further request error handlers.
 				break
 			} else {
 				requestError = result.value
 			}
 		}
 
-		// We assume that the request interceptors have corrected an error if `response` was set, so let's only throw the request error if that wasn't done.
+		// If `response` isn't set here, the request error wasn't corrected and we can throw it.
 		if (!response) {
 			throw requestError
 		}
+		// Conversely, `response` being set here is the signal for the request error to have been corrected by a request error handler and for retrieve to move on to processing the response as if no request error had occurred in the first place.
 	}
 
 	let retrieveResponse = await createRetrieveResponse(response)
 
-	// Process response interceptors' `onResponseSuccess` handlers
 	for (const responseSuccessHandler of config.responseSuccessHandlers ?? []) {
 		if (retrieveResponse.response.ok) {
 			retrieveResponse = await responseSuccessHandler(retrieveResponse)
@@ -324,7 +322,6 @@ export async function retrieve(config: RetrieveConfig): Promise<RetrieveResponse
 
 	let error: Error = new ResponseError(response, config.responseErrorMessage)
 
-	// Process response interceptors' `onResponseError` handlers
 	for (const responseErrorHandler of config.responseErrorHandlers ?? []) {
 		const result = await responseErrorHandler(error, retrieveResponse, ...fetchParams)
 
@@ -344,7 +341,7 @@ export async function retrieve(config: RetrieveConfig): Promise<RetrieveResponse
 }
 
 /**
- * Creates a `URL` object that will be passed to `fetch` as the `input` parameter.
+ * Creates a `URL` object that will be passed to `fetch` as its `input` parameter.
  */
 function createUrl(config: RetrieveConfig): URL {
 	// Process request URL
@@ -364,6 +361,9 @@ function createUrl(config: RetrieveConfig): URL {
 	return url
 }
 
+/**
+ * Creates an `RequestInit` object that will be passed to `fetch` as its `init` parameter.
+ */
 function createInit(config: RetrieveConfig): RequestInit {
 	const originalInit = config.init ?? {}
 	const init: RequestInit = { ...originalInit }
@@ -442,6 +442,9 @@ function createRequestError(error: unknown, requestErrorMessage?: string): Error
 	return requestError
 }
 
+/**
+ * Takes a `Response` object and deserializes its body (if set)
+ */
 async function createRetrieveResponse(response: Response): Promise<RetrieveResponse> {
 	const contentType = response.headers.get(CONTENT_TYPE) ?? ''
 	let bodyType: BodyType | undefined
