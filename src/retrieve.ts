@@ -326,8 +326,9 @@ export async function retrieve(config: RetrieveConfig): Promise<RetrieveResponse
 		const result = await responseErrorHandler(error, retrieveResponse, ...fetchParams)
 
 		if (result.status === 'corrected') {
-			// Only updates `retrieveResponse` so that remaining response interceptors can still deal be executed. An alternative would be to immediately return `retrieveResponse` if `retrieveResponse.response.ok` is `true` because at this point, the initial response error state can be considered recovered and any further error recovery procedure would be futile. But we don't really have to make this assumption and let the interceptors behave gracefully in this case (i.e. by them not performing error corrective actions in case the provided `retrieveResponse` has `retrieveResponse.response.ok` set to `true`).
 			retrieveResponse = await createRetrieveResponse(result.value)
+			// At this point, the current response error handler has corrected the error state (by returning a new `retrieveResponse` object) and we stop processing any further response error handlers.
+			break
 		} else {
 			error = result.value
 		}
