@@ -27,19 +27,31 @@
 
 * overriding x-requested-with header ([f9d32d4](https://github.com/kleinfreund/retrieve/commit/f9d32d4fbc8cd5d4b7104c868eac12421c7f27f6))
 
+  Fixes setting the x-requested-with header when `config.init.headers` already has a value for that header field.
+
 # [1.1.0](https://github.com/kleinfreund/retrieve/compare/v1.0.0...v1.1.0) (2023-07-16)
-
-
-### Bug Fixes
-
-* ignoring `config.init.body` ([514b3e6](https://github.com/kleinfreund/retrieve/commit/514b3e699251e255ef549c76403a69f03decce9d))
-* not passing `config.init` to `fetch` ([4139f4f](https://github.com/kleinfreund/retrieve/commit/4139f4fe67392a5968b6ded515e2497f10ca3959))
-* using JSON content-type for POST requests with FormData body ([5ae55df](https://github.com/kleinfreund/retrieve/commit/5ae55df407cd8fdd7930b7939b3730aa1d99331a))
 
 
 ### Features
 
 * changes default response error message ([20ef3eb](https://github.com/kleinfreund/retrieve/commit/20ef3eba0b20e71526224f2329d7e8d6831f8cc2))
+
+  Changes the default response error message from `'Unknown response error'` to `$statusCode $statusText` (e.g. `'404 Not Found'`).
+
+
+### Bug Fixes
+
+* ignoring `config.init.body` ([514b3e6](https://github.com/kleinfreund/retrieve/commit/514b3e699251e255ef549c76403a69f03decce9d))
+
+  Fixes an issue where `config.init.body` would always be ignored regardless of `config.data` being set. Now, if `config.data` is not set and `config.init.body` is set, `config.init.body` will be used as the request body as-is.
+
+* not passing `config.init` to `fetch` ([4139f4f](https://github.com/kleinfreund/retrieve/commit/4139f4fe67392a5968b6ded515e2497f10ca3959))
+
+  Fixes a bug causing `config.init` not to be passed as the `init` parameter to `fetch`.
+
+* using JSON content-type for POST requests with FormData body ([5ae55df](https://github.com/kleinfreund/retrieve/commit/5ae55df407cd8fdd7930b7939b3730aa1d99331a))
+
+  Fixes POST requests with `config.data` being set to a `FormData` object being sent with a content type `'application/json'`. Instead, such requests now will be sent with **no** content type as the browser will set it automatically.
 
 # 1.0.0 (2023-06-20)
 
