@@ -1,3 +1,25 @@
+## [1.2.0](https://github.com/kleinfreund/retrieve/compare/v1.1.1...v1.2.0) (2023-11-25)
+
+
+### Features
+
+* relax response error handler types ([5095993](https://github.com/kleinfreund/retrieve/commit/5095993f41d2fba78cfcb1cc788631cd1a5542a1))
+
+  Relaxes the types of response error handlers. The first argument of a response error handler is now typed as `Error` instead of `ResponseError`. Only the type changes. The value is unchanged: the object will still be a `ResponseError` unless a previous response error handler changes it. Similarly, the return value for maintained errors now expects a `value` of type `Error` instead of requiring `ResponseError`. This makes it easier to use response error handler because you can now return custom error formats without angering the TypeScript compiler.
+
+
+### Bug Fixes
+
+* only processing the first response success handler ([f4a1e06](https://github.com/kleinfreund/retrieve/commit/f4a1e065f2a58278850f26259468a9f1153093c1))
+
+  Fixes an issue with response success handlers where only the first handler was processed.
+* processing more response error handlers after one corrected an error ([7567bc5](https://github.com/kleinfreund/retrieve/commit/7567bc549d68ef73c4bedd9db9d9b6c41d0f98b2))
+
+  Fixes an issue with the processing of response error handlers where if a handler corrected the error state, retrieve would continue processing the remaining handlers. This was unintentional and neither matched the behavior of request error handlers nor the documentation for response error handlers.
+* processing response success handlers in error case ([92567fb](https://github.com/kleinfreund/retrieve/commit/92567fb4e39f070b2c85427bfcd754cfb87b2471))
+
+  Fixes an issue with response success handlers where handlers were executed even if the network response had an error status code.
+
 ## [1.1.1](https://github.com/kleinfreund/retrieve/compare/v1.1.0...v1.1.1) (2023-11-18)
 
 
