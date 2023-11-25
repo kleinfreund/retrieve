@@ -947,9 +947,9 @@ describe('retrieve', () => {
 					{
 						url: 'http://example.org',
 						responseSuccessHandlers: [
-							(responseObj) => {
-								responseObj.data = 'test'
-								return Promise.resolve(responseObj)
+							(retrieveResponse) => {
+								retrieveResponse.data = 'test'
+								return Promise.resolve(retrieveResponse)
 							},
 						],
 					} satisfies RetrieveConfig,
@@ -1031,6 +1031,66 @@ describe('retrieve', () => {
 			})
 		})
 	})
+
+	describe('examples', () => {
+		test('Example 6: transforming response error', async () => {
+			class ApiError extends Error {
+				code: string | null = null
+
+				constructor(message: string, code: string | null = null) {
+					super(message)
+					this.code = code
+				}
+
+				toJSON() {
+					return {
+						code: this.code,
+						message: this.message,
+					}
+				}
+			}
+
+			const expectedError = new ApiError('error message', 'error_code')
+
+			vi.spyOn(global, 'fetch').mockImplementation(function () {
+				const response = new Response('{"code":"error_code","message":"error message"}', {
+					status: 400,
+					statusText: 'Bad Request',
+					headers: {
+						'content-type': 'application/problem+json; charset=utf-8',
+					},
+				})
+
+				return Promise.resolve(response)
+			})
+			const promise = retrieve({
+				url: 'http://api.example.org/status',
+				responseErrorHandlers: [
+					async (error, { data }) => {
+						let message = error.message
+						let code = null
+
+						if (data && typeof data === 'object') {
+							if ('message' in data && typeof data.message === 'string') {
+								message = data.message
+							}
+
+							if ('code' in data && typeof data.code === 'string') {
+								code = data.code
+							}
+						}
+
+						return {
+							status: 'maintained',
+							value: new ApiError(message, code),
+						}
+					},
+				],
+			})
+
+			expect(promise).rejects.toThrowError(expectedError)
+		})
+	})
 })
 
 
@@ -1052,5 +1112,7 @@ function toUrl(url: OriginalFetchParams[0]): URL {
 	return typeof url === 'string'
 		? new URL(url)
 		: url instanceof URL
-			? url : new URL(url.url)
+			? url
+			// @ts-expect-error No idea why TypeScript started to think `url` can still be a `URL`. Surely the previous branch rules that out?
+			: new URL(url.url)
 }

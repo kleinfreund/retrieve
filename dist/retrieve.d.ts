@@ -1,15 +1,3 @@
-declare class ResponseError extends Error {
-    name: string;
-    response: Response;
-    constructor(response: Response, message?: string, options?: {
-        cause?: unknown;
-    });
-    toJSON(): {
-        name: string;
-        message: string;
-    };
-}
-
 interface RetrieveConfig {
     /**
      * Request URL.
@@ -182,15 +170,15 @@ interface RetrieveConfig {
      * const config = {
      *   url: 'https://api.example.org',
      *   responseErrorHandlers: [
-     *     async (responseError, retrieveResponse, url, init) => {
-     *       if (responseError.response.status === 401) {
+     *     async (error, retrieveResponse, url, init) => {
+     *       if (retrieveResponse.response.status === 401) {
      *         // Do something to fix the error cause (e.g. refresh the user's session)
      *         const response = await fetch(url, init)
      *
      *         return { status: 'corrected', value: response }
      *       }
      *
-     *       return { status: 'maintained', value: responseError }
+     *       return { status: 'maintained', value: error }
      *     },
      *   ],
      * }
@@ -204,11 +192,11 @@ interface RetrieveConfig {
      * const config = {
      *   url: 'https://api.example.org',
      *   responseErrorHandlers: [
-     *     async (responseError, retrieveResponse, url, init) => {
-     *       // Do something with responseError
-     *       responseError.message = 'ERR: ' + responseError.message
+     *     async (error, retrieveResponse, url, init) => {
+     *       // Do something with error
+     *       error.message = 'ERR: ' + error.message
      *
-     *       return { status: 'maintained', value: responseError }
+     *       return { status: 'maintained', value: error }
      *     },
      *   ],
      * }
@@ -243,8 +231,20 @@ type ErrorHandlerResult<ErrorType = Error> = ErrorCorrectedResult | ErrorMaintai
 type RetrieveFetchParams = [RetrieveConfig['url'], RequestInit];
 type BeforeRequestHandler = (...fetchParams: RetrieveFetchParams) => RetrieveFetchParams | Promise<RetrieveFetchParams>;
 type RequestErrorHandler = (requestError: Error, ...fetchParams: RetrieveFetchParams) => ErrorHandlerResult | Promise<ErrorHandlerResult>;
-type ResponseSuccessHandler = (responseObj: RetrieveResponse) => RetrieveResponse | Promise<RetrieveResponse>;
-type ResponseErrorHandler = (responseError: ResponseError, responseObj: RetrieveResponse | undefined, ...fetchParams: RetrieveFetchParams) => ErrorHandlerResult<ResponseError> | Promise<ErrorHandlerResult<ResponseError>>;
+type ResponseSuccessHandler = (retrieveResponse: RetrieveResponse) => RetrieveResponse | Promise<RetrieveResponse>;
+type ResponseErrorHandler = (error: Error, retrieveResponse: RetrieveResponse, ...fetchParams: RetrieveFetchParams) => ErrorHandlerResult<Error> | Promise<ErrorHandlerResult<Error>>;
 declare function retrieve(config: RetrieveConfig): Promise<RetrieveResponse>;
+
+declare class ResponseError extends Error {
+    name: string;
+    response: Response;
+    constructor(response: Response, message?: string, options?: {
+        cause?: unknown;
+    });
+    toJSON(): {
+        name: string;
+        message: string;
+    };
+}
 
 export { type BeforeRequestHandler, type ErrorCorrectedResult, type ErrorMaintainedResult, type RequestErrorHandler, ResponseError, type ResponseErrorHandler, type ResponseSuccessHandler, type RetrieveConfig, type RetrieveFetchParams, type RetrieveResponse, retrieve };

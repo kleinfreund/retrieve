@@ -185,15 +185,15 @@ export interface RetrieveConfig {
 	 * const config = {
 	 *   url: 'https://api.example.org',
 	 *   responseErrorHandlers: [
-	 *     async (responseError, retrieveResponse, url, init) => {
-	 *       if (responseError.response.status === 401) {
+	 *     async (error, retrieveResponse, url, init) => {
+	 *       if (retrieveResponse.response.status === 401) {
 	 *         // Do something to fix the error cause (e.g. refresh the user's session)
 	 *         const response = await fetch(url, init)
 	 *
 	 *         return { status: 'corrected', value: response }
 	 *       }
 	 *
-	 *       return { status: 'maintained', value: responseError }
+	 *       return { status: 'maintained', value: error }
 	 *     },
 	 *   ],
 	 * }
@@ -207,11 +207,11 @@ export interface RetrieveConfig {
 	 * const config = {
 	 *   url: 'https://api.example.org',
 	 *   responseErrorHandlers: [
-	 *     async (responseError, retrieveResponse, url, init) => {
-	 *       // Do something with responseError
-	 *       responseError.message = 'ERR: ' + responseError.message
+	 *     async (error, retrieveResponse, url, init) => {
+	 *       // Do something with error
+	 *       error.message = 'ERR: ' + error.message
 	 *
-	 *       return { status: 'maintained', value: responseError }
+	 *       return { status: 'maintained', value: error }
 	 *     },
 	 *   ],
 	 * }
@@ -255,9 +255,9 @@ export type BeforeRequestHandler = (...fetchParams: RetrieveFetchParams) => Retr
 
 export type RequestErrorHandler = (requestError: Error, ...fetchParams: RetrieveFetchParams) => ErrorHandlerResult | Promise<ErrorHandlerResult>
 
-export type ResponseSuccessHandler = (responseObj: RetrieveResponse) => RetrieveResponse | Promise<RetrieveResponse>
+export type ResponseSuccessHandler = (retrieveResponse: RetrieveResponse) => RetrieveResponse | Promise<RetrieveResponse>
 
-export type ResponseErrorHandler = (responseError: ResponseError, responseObj: RetrieveResponse | undefined, ...fetchParams: RetrieveFetchParams) => ErrorHandlerResult<ResponseError> | Promise<ErrorHandlerResult<ResponseError>>
+export type ResponseErrorHandler = (error: Error, retrieveResponse: RetrieveResponse, ...fetchParams: RetrieveFetchParams) => ErrorHandlerResult<Error> | Promise<ErrorHandlerResult<Error>>
 
 type BodyType = 'arrayBuffer' | 'blob' | 'formData' | 'json' | 'text'
 
@@ -322,17 +322,17 @@ export async function retrieve(config: RetrieveConfig): Promise<RetrieveResponse
 		return retrieveResponse
 	}
 
-	let responseError = new ResponseError(response, config.responseErrorMessage)
+	let error: Error = new ResponseError(response, config.responseErrorMessage)
 
 	// Process response interceptors' `onResponseError` handlers
 	for (const responseErrorHandler of config.responseErrorHandlers ?? []) {
-		const result = await responseErrorHandler(responseError, retrieveResponse, ...fetchParams)
+		const result = await responseErrorHandler(error, retrieveResponse, ...fetchParams)
 
 		if (result.status === 'corrected') {
 			// Only updates `retrieveResponse` so that remaining response interceptors can still deal be executed. An alternative would be to immediately return `retrieveResponse` if `retrieveResponse.response.ok` is `true` because at this point, the initial response error state can be considered recovered and any further error recovery procedure would be futile. But we don't really have to make this assumption and let the interceptors behave gracefully in this case (i.e. by them not performing error corrective actions in case the provided `retrieveResponse` has `retrieveResponse.response.ok` set to `true`).
 			retrieveResponse = await createRetrieveResponse(result.value)
 		} else {
-			responseError = result.value
+			error = result.value
 		}
 	}
 
@@ -340,7 +340,7 @@ export async function retrieve(config: RetrieveConfig): Promise<RetrieveResponse
 		return retrieveResponse
 	}
 
-	throw responseError
+	throw error
 }
 
 /**

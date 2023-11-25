@@ -289,15 +289,15 @@ Returning a result object with the corrected status and a `Response` object allo
 const config = {
 	url: 'https://api.example.org',
 	responseErrorHandlers: [
-		async (responseError, retrieveResponse, url, init) => {
-			if (responseError.response.status === 401) {
+		async (error, retrieveResponse, url, init) => {
+			if (retrieveResponse.response.status === 401) {
 				// Do something to fix the error cause (e.g. refresh the user's session)
 				const response = await fetch(url, init)
 
 				return { status: 'corrected', value: response }
 			}
 
-			return { status: 'maintained', value: responseError }
+			return { status: 'maintained', value: error }
 		},
 	],
 }
@@ -311,11 +311,11 @@ Returning a result object with the maintained status and an `ResponseError` obje
 const config = {
 	url: 'https://api.example.org',
 	responseErrorHandlers: [
-		async (responseError, retrieveResponse, url, init) => {
-			// Do something with responseError
-			responseError.message = 'ERR: ' + responseError.message
+		async (error, retrieveResponse, url, init) => {
+			// Do something with error
+			error.message = 'ERR: ' + error.message
 
-			return { status: 'maintained', value: responseError }
+			return { status: 'maintained', value: error }
 		},
 	],
 }
@@ -334,6 +334,22 @@ A `TypeError` is thrown when `fetch` does (see [fetch() global function: Excepti
 #### `ResponseError`
 
 A `ResponseError` is thrown for `fetch` responses with a status code >=300.
+
+By default, this error will be an instance of `ResponseError` which will have access to the original `Response` object returned by `fetch`:
+
+```js
+try {
+	await retrieve({
+		url: 'https://pokeapi.co/api/v2/pokemon/grogu/',
+	})
+} catch (error) {
+	if (error instanceof ResponseError) {
+		console.log(error.response)
+	}
+}
+```
+
+Note that when using response error handlers that the final error is determined by you and may or may not be a `ResponseError`.
 
 ## Examples
 
@@ -373,17 +389,17 @@ async function example() {
 	await retrieve({
 		url: 'http://api.example.org/status',
 		responseErrorHandlers: [
-			async (responseError, retrieveResponse, url, init) => {
-				if (responseError.response.status === 401) {
+			async (error, retrieveResponse, url, init) => {
+				if (retrieveResponse.response.status === 401) {
 					// Do something to fix the error cause (e.g. refresh the user's session)
 					const response = await fetch(url, init)
 
 					return { status: 'corrected', value: response }
 				}
 
-				return { status: 'maintained', value: responseError }
+				return { status: 'maintained', value: error }
 			},
-		]
+		],
 	})
 }
 
@@ -469,6 +485,65 @@ form.addEventListener('submit', function (event) {
 		},
 	})
 })
+```
+
+### Example 6: transforming response error
+
+Use a response error handler to transform a well-defined error format on your API responses into a custom API error class.
+
+```js
+class ApiError extends Error {
+	code = null
+
+	constructor(message, code = null) {
+		super(message)
+		this.code = code
+	}
+
+	toJSON() {
+		return {
+			code: this.code,
+			message: this.message,
+		}
+	}
+}
+
+async function example() {
+	try {
+		await retrieve({
+			url: 'http://api.example.org/status',
+			responseErrorHandlers: [
+				async (error, { data }) => {
+					let message = error.message
+					let code = null
+
+					if (data && typeof data === 'object') {
+						if ('message' in data && typeof data.message === 'string') {
+							message = data.message
+						}
+
+						if ('code' in data && typeof data.code === 'string') {
+							code = data.code
+						}
+					}
+
+					return {
+						status: 'maintained',
+						value: new ApiError(message, code),
+					}
+				},
+			],
+		})
+	} catch (error) {
+		if (error instanceof ApiError) {
+			console.error(`${error.code}: ${error.message}`)
+		} else {
+			console.error(error)
+		}
+	}
+}
+
+example()
 ```
 
 ## Features
