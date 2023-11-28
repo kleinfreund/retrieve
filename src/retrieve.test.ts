@@ -476,8 +476,7 @@ describe('retrieve', () => {
 					],
 				])('%s', async (_title, config, expectedError) => {
 					let rejectFetchPromise: (reason?: unknown) => unknown = () => undefined
-					// @ts-expect-error We want to return a promise that doesn't resolve to test timeouts.
-					vi.spyOn(global, 'fetch').mockImplementation(() => new Promise((_resolve, reject) => {
+					vi.spyOn(global, 'fetch').mockImplementation(() => new Promise<Response>((_resolve, reject) => {
 						rejectFetchPromise = reject
 					}))
 
@@ -791,17 +790,16 @@ describe('retrieve', () => {
 					return Promise.resolve(response)
 				})
 
-				let error
 				try {
 					await retrieve({ url: 'http://example.org' })
 				} catch (err) {
-					error = err
-				}
+					expect(err instanceof Error).toBe(true)
 
-				// @ts-expect-error it's fine
-				expect(error.message).toBe('You messed up')
-				// @ts-expect-error promise
-				expect(error.cause).toBe('badly')
+					if (err instanceof Error) {
+						expect(err.message).toBe('You messed up')
+						expect(err.cause).toBe('badly')
+					}
+				}
 			})
 
 			test('response with no content-type is handled correctly', async () => {
