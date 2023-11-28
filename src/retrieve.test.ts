@@ -11,7 +11,7 @@ describe('retrieve', () => {
 
 	describe('fetch parameter preparation', () => {
 		describe('url', () => {
-			test.each([
+			test.each<[string, RetrieveConfig, OriginalFetchParams[0]]>([
 				[
 					'absolute URL as string',
 					{
@@ -64,7 +64,7 @@ describe('retrieve', () => {
 					},
 					new URL('http://example.org/path'),
 				],
-			])('%s', async (_title: string, config: RetrieveConfig, expectedUrl: OriginalFetchParams[0]) => {
+			])('%s', async (_title, config, expectedUrl) => {
 				vi.spyOn(global, 'fetch').mockImplementation((...fetchParams: OriginalFetchParams) => {
 					assertUrlEquality(fetchParams[0], expectedUrl)
 
@@ -125,7 +125,7 @@ describe('retrieve', () => {
 			})
 
 			describe('method', () => {
-				test.each([
+				test.each<[string, RetrieveConfig, OriginalFetchParams[1]]>([
 					[
 						'no method defaults to GET',
 						{
@@ -153,7 +153,7 @@ describe('retrieve', () => {
 							}),
 						},
 					],
-				])('%s', async (_title: string, config: RetrieveConfig, expectedInit: OriginalFetchParams[1]) => {
+				])('%s', async (_title, config, expectedInit) => {
 					vi.spyOn(global, 'fetch').mockImplementation((...fetchParams: OriginalFetchParams) => {
 						assertInitEquality(fetchParams[1], expectedInit)
 
@@ -167,7 +167,7 @@ describe('retrieve', () => {
 			})
 
 			describe('headers', () => {
-				test.each([
+				test.each<[string, RetrieveConfig, OriginalFetchParams[1]]>([
 					[
 						'POST method sets content-type application/json',
 						{
@@ -176,7 +176,7 @@ describe('retrieve', () => {
 								method: 'POST',
 							},
 							data: 'hello',
-						} satisfies RetrieveConfig,
+						},
 						{
 							method: 'POST',
 							headers: new Headers({
@@ -194,7 +194,7 @@ describe('retrieve', () => {
 								method: 'PUT',
 							},
 							data: 'hello',
-						} satisfies RetrieveConfig,
+						},
 						{
 							method: 'PUT',
 							headers: new Headers({
@@ -212,7 +212,7 @@ describe('retrieve', () => {
 								method: 'PATCH',
 							},
 							data: 'hello',
-						} satisfies RetrieveConfig,
+						},
 						{
 							method: 'PATCH',
 							headers: new Headers({
@@ -227,7 +227,7 @@ describe('retrieve', () => {
 						{
 							url: 'http://example.org',
 							data: new ArrayBuffer(8),
-						} satisfies RetrieveConfig,
+						},
 						{
 							method: 'GET',
 							headers: new Headers({
@@ -242,7 +242,7 @@ describe('retrieve', () => {
 						{
 							url: 'http://example.org',
 							data: new Blob(),
-						} satisfies RetrieveConfig,
+						},
 						{
 							method: 'GET',
 							headers: new Headers({
@@ -257,7 +257,7 @@ describe('retrieve', () => {
 						{
 							url: 'http://example.org',
 							data: new FormData(),
-						} satisfies RetrieveConfig,
+						},
 						{
 							method: 'GET',
 							headers: new Headers({
@@ -273,7 +273,7 @@ describe('retrieve', () => {
 							url: 'http://example.org',
 							init: { method: 'post' },
 							data: new FormData(),
-						} satisfies RetrieveConfig,
+						},
 						{
 							method: 'POST',
 							headers: new Headers({
@@ -290,7 +290,7 @@ describe('retrieve', () => {
 							init: {
 								headers: [['content-type', 'plain/text']],
 							},
-						} satisfies RetrieveConfig,
+						},
 						{
 							method: 'GET',
 							headers: new Headers({
@@ -306,7 +306,7 @@ describe('retrieve', () => {
 							init: {
 								headers: { 'content-type': 'plain/text' },
 							},
-						} satisfies RetrieveConfig,
+						},
 						{
 							method: 'GET',
 							headers: new Headers({
@@ -322,7 +322,7 @@ describe('retrieve', () => {
 							init: {
 								headers: new Headers({ 'content-type': 'plain/text' }),
 							},
-						} satisfies RetrieveConfig,
+						},
 						{
 							method: 'GET',
 							headers: new Headers({
@@ -331,7 +331,7 @@ describe('retrieve', () => {
 							}),
 						},
 					],
-				])('%s', async (_title: string, config: RetrieveConfig, expectedInit: OriginalFetchParams[1]) => {
+				])('%s', async (_title, config, expectedInit) => {
 					vi.spyOn(global, 'fetch').mockImplementation((...fetchParams: OriginalFetchParams) => {
 						assertInitEquality(fetchParams[1], expectedInit)
 
@@ -345,7 +345,7 @@ describe('retrieve', () => {
 			})
 
 			describe('body', () => {
-				test.each([
+				test.each<[string, RetrieveConfig, OriginalFetchParams[1]]>([
 					[
 						'JSON dictionary',
 						{
@@ -442,7 +442,7 @@ describe('retrieve', () => {
 							body: 'Hello, server!',
 						},
 					],
-				])('%s', async (_title: string, config: RetrieveConfig, expectedInit: OriginalFetchParams[1]) => {
+				])('%s', async (_title, config, expectedInit) => {
 					vi.spyOn(global, 'fetch').mockImplementation((...fetchParams: OriginalFetchParams) => {
 						assertInitEquality(fetchParams[1], expectedInit)
 
@@ -464,7 +464,7 @@ describe('retrieve', () => {
 					vi.useRealTimers()
 				})
 
-				test.each([
+				test.each<[string, RetrieveConfig, Error]>([
 					[
 						'5s timeout',
 						{
@@ -474,7 +474,7 @@ describe('retrieve', () => {
 						// Note: This should be `new DOMException`, but somehow `DOMException instanceof Error` is `false` in JSDOM.
 						new Error('Request timed out'),
 					],
-				])('%s', async (_title: string, config: RetrieveConfig, expectedError: Error) => {
+				])('%s', async (_title, config, expectedError) => {
 					let rejectFetchPromise: (reason?: unknown) => unknown = () => undefined
 					// @ts-expect-error We want to return a promise that doesn't resolve to test timeouts.
 					vi.spyOn(global, 'fetch').mockImplementation(() => new Promise((_resolve, reject) => {
@@ -502,7 +502,7 @@ describe('retrieve', () => {
 
 	describe('fetch processing', () => {
 		describe('network error', () => {
-			test.each([
+			test.each<[string, typeof fetch, RetrieveConfig, Error]>([
 				[
 					'Error + fetch error message',
 					() => Promise.reject(new Error('Original error message')),
@@ -549,7 +549,7 @@ describe('retrieve', () => {
 					},
 					new Error('Custom error message', { cause: 'Original error message' }),
 				],
-			])('%s', async (_title: string, fetchMock: typeof fetch, config: RetrieveConfig, expectedError: Error) => {
+			])('%s', async (_title, fetchMock, config, expectedError) => {
 				vi.spyOn(global, 'fetch').mockImplementation(fetchMock)
 
 				const promise = retrieve(config)
@@ -558,7 +558,7 @@ describe('retrieve', () => {
 		})
 
 		describe('responses with status codes 200-299', () => {
-			test.each([
+			test.each<[string, typeof fetch, unknown, Partial<Response>]>([
 				[
 					'application/json',
 					function () {
@@ -650,7 +650,7 @@ describe('retrieve', () => {
 						statusText: 'Super duper!',
 					},
 				],
-			])('handles content-type %s', async (_title: string, fetchMock: typeof fetch, expectedData: unknown, expectedPartialResponse: Partial<Response>) => {
+			])('handles content-type %s', async (_title, fetchMock, expectedData, expectedPartialResponse) => {
 				vi.spyOn(global, 'fetch').mockImplementation(fetchMock)
 
 				const { data, response } = await retrieve({ url: 'http://example.org' })
@@ -664,7 +664,7 @@ describe('retrieve', () => {
 				expect(response).toEqual(expect.objectContaining(expectedPartialResponse))
 			})
 
-			test.each([
+			test.each<[typeof fetch, Error]>([
 				[
 					function () {
 						const response = new Response('{', {
@@ -679,7 +679,7 @@ describe('retrieve', () => {
 					},
 					new Error('Expected property name or \'}\' in JSON at position 1'),
 				],
-			])('handles invalid JSON correctly', async (fetchMock: typeof fetch, expectedError: Error) => {
+			])('handles invalid JSON correctly', async (fetchMock, expectedError) => {
 				// Throw the expected JSON error manually because different implementations will throw errors with different messages which makes this test unstable.
 				vi.spyOn(Response.prototype, 'json').mockImplementation(() => {
 					throw new Error('Expected property name or \'}\' in JSON at position 1')
@@ -693,7 +693,7 @@ describe('retrieve', () => {
 		})
 
 		describe('responses with status codes >=300', () => {
-			test.each([
+			test.each<[string, typeof fetch, Error]>([
 				[
 					'no content-type',
 					function () {
@@ -766,7 +766,7 @@ describe('retrieve', () => {
 					},
 					new Error('400 Bad Request'),
 				],
-			])('handles content-type %s', async (_title: string, fetchMock: typeof fetch, expectedError: Error) => {
+			])('handles content-type %s', async (_title, fetchMock, expectedError) => {
 				vi.spyOn(global, 'fetch').mockImplementation(fetchMock)
 
 				const promise = retrieve({ url: 'http://example.org' })
@@ -816,7 +816,7 @@ describe('retrieve', () => {
 
 	describe('interceptors', () => {
 		describe('beforeRequestHandlers', () => {
-			test.each([
+			test.each<[RetrieveConfig, URL, OriginalFetchParams[1]]>([
 				[
 					{
 						url: 'http://example.org/path',
@@ -827,7 +827,7 @@ describe('retrieve', () => {
 								return [newUrl, init]
 							},
 						],
-					} satisfies RetrieveConfig,
+					},
 					new URL('http://example.org/path-x'),
 					{
 						method: 'GET',
@@ -842,7 +842,7 @@ describe('retrieve', () => {
 						beforeRequestHandlers: [
 							(url, init) => [url, { ...init, method: 'PATCH' }],
 						],
-					} satisfies RetrieveConfig,
+					},
 					new URL('http://example.org/path'),
 					{
 						method: 'PATCH',
@@ -851,7 +851,7 @@ describe('retrieve', () => {
 						}),
 					},
 				],
-			])('onResponseSuccess handlers produce response', async (config: RetrieveConfig, ...expectedFetchParams: OriginalFetchParams) => {
+			])('onResponseSuccess handlers produce response', async (config, ...expectedFetchParams) => {
 				vi.spyOn(global, 'fetch').mockImplementation((...fetchParams: OriginalFetchParams) => {
 					assertUrlEquality(fetchParams[0], expectedFetchParams[0])
 					assertInitEquality(fetchParams[1], expectedFetchParams[1])
@@ -866,14 +866,14 @@ describe('retrieve', () => {
 		})
 
 		describe('requestErrorHandlers', () => {
-			test.each([
+			test.each<[RetrieveConfig, Error]>([
 				[
 					{
 						url: 'http://example.org',
 						requestErrorHandlers: [
 							(error) => ({ status: 'maintained', value: error }),
 						],
-					} satisfies RetrieveConfig,
+					},
 					new Error('Standard error'),
 				],
 				[
@@ -885,17 +885,17 @@ describe('retrieve', () => {
 								return { status: 'maintained', value: error }
 							},
 						],
-					} satisfies RetrieveConfig,
+					},
 					new Error('Overridden error'),
 				],
-			])('onRequestError handlers produce error', async (config: RetrieveConfig, expectedError: Error) => {
+			])('onRequestError handlers produce error', async (config, expectedError) => {
 				vi.spyOn(global, 'fetch').mockImplementation(() => Promise.reject(new Error('Standard error')))
 
 				const promise = retrieve(config)
 				await expect(promise).rejects.toThrowError(expectedError)
 			})
 
-			test.each([
+			test.each<[RetrieveConfig, unknown]>([
 				[
 					{
 						url: 'http://example.org',
@@ -910,10 +910,10 @@ describe('retrieve', () => {
 								return { status: 'corrected', value: response }
 							},
 						],
-					} satisfies RetrieveConfig,
+					},
 					'Hell yeah!',
 				],
-			])('onRequestError handlers produce response', async (config: RetrieveConfig, expectedData: unknown) => {
+			])('onRequestError handlers produce response', async (config, expectedData) => {
 				vi.spyOn(global, 'fetch').mockImplementation(() => Promise.reject(new Error('Standard error')))
 
 				const { data } = await retrieve(config)
@@ -921,7 +921,7 @@ describe('retrieve', () => {
 				expect(data).toEqual(expectedData)
 			})
 
-			test.each([
+			test.each<[RetrieveConfig, string]>([
 				[
 					{
 						url: 'http://example.org',
@@ -930,10 +930,10 @@ describe('retrieve', () => {
 								throw 'Unknown error format'
 							},
 						],
-					} satisfies RetrieveConfig,
+					},
 					'Unknown error format',
 				],
-			])('onRequestError handlers raise exception on unknown error format', async (config: RetrieveConfig, expectedError: string) => {
+			])('onRequestError handlers raise exception on unknown error format', async (config, expectedError) => {
 				vi.spyOn(global, 'fetch').mockImplementation(() => Promise.reject(new Error('Standard error')))
 
 				const promise = retrieve(config)
@@ -942,7 +942,7 @@ describe('retrieve', () => {
 		})
 
 		describe('responseSuccessHandlers', () => {
-			test.each([
+			test.each<[RetrieveConfig, unknown]>([
 				[
 					{
 						url: 'http://example.org',
@@ -952,7 +952,7 @@ describe('retrieve', () => {
 								return Promise.resolve(retrieveResponse)
 							},
 						],
-					} satisfies RetrieveConfig,
+					},
 					'test',
 				],
 				[
@@ -968,10 +968,10 @@ describe('retrieve', () => {
 								return Promise.resolve(retrieveResponse)
 							},
 						],
-					} satisfies RetrieveConfig,
+					},
 					'overridden data',
 				],
-			])('onResponseSuccess handlers produce response', async (config: RetrieveConfig, expectedData: unknown) => {
+			])('onResponseSuccess handlers produce response', async (config, expectedData) => {
 				vi.spyOn(global, 'fetch').mockImplementation(() => Promise.resolve(new Response('OK')))
 
 				const { data } = await retrieve(config)
@@ -981,7 +981,7 @@ describe('retrieve', () => {
 		})
 
 		describe('responseErrorHandlers', () => {
-			test.each([
+			test.each<[RetrieveConfig, Error]>([
 				[
 					{
 						url: 'http://example.org/path',
@@ -991,17 +991,17 @@ describe('retrieve', () => {
 								return { status: 'maintained', value: error }
 							},
 						],
-					} satisfies RetrieveConfig,
+					},
 					new Error('Altered message'),
 				],
-			])('onResponseError handlers produce error', async (config: RetrieveConfig, expectedError: Error) => {
+			])('onResponseError handlers produce error', async (config, expectedError) => {
 				vi.spyOn(global, 'fetch').mockImplementation(() => Promise.resolve(new Response('Unauthorized', { status: 401 })))
 
 				const promise = retrieve(config)
 				await expect(promise).rejects.toThrowError(expectedError)
 			})
 
-			test.each([
+			test.each<[RetrieveConfig, unknown]>([
 				[
 					{
 						url: 'http://example.org',
@@ -1016,10 +1016,10 @@ describe('retrieve', () => {
 								return { status: 'corrected', value: response }
 							},
 						],
-					} satisfies RetrieveConfig,
+					},
 					'Hell yeah!',
 				],
-			])('onResponseError handlers produce response', async (config: RetrieveConfig, expectedData: unknown) => {
+			])('onResponseError handlers produce response', async (config, expectedData) => {
 				vi.spyOn(global, 'fetch').mockImplementation(() => Promise.resolve(new Response('Unauthorized', { status: 401 })))
 
 				const { data } = await retrieve(config)
@@ -1027,7 +1027,7 @@ describe('retrieve', () => {
 				expect(data).toEqual(expectedData)
 			})
 
-			test.each([
+			test.each<[RetrieveConfig, string]>([
 				[
 					{
 						url: 'http://example.org',
@@ -1036,10 +1036,10 @@ describe('retrieve', () => {
 								throw 'Unknown error format'
 							},
 						],
-					} satisfies RetrieveConfig,
+					},
 					'Unknown error format',
 				],
-			])('onResponseError handlers raise exception on unknown error format', async (config: RetrieveConfig, expectedError: string) => {
+			])('onResponseError handlers raise exception on unknown error format', async (config, expectedError) => {
 				vi.spyOn(global, 'fetch').mockImplementation(() => Promise.resolve(new Response('Unauthorized', { status: 401 })))
 
 				const promise = retrieve(config)
