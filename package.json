@@ -62,7 +62,7 @@
 		"cross-env": "^7.0.3",
 		"eslint": "^8.55.0",
 		"husky": "^8.0.3",
-		"jsdom": "^22.1.0",
+		"jsdom": "^23.0.1",
 		"lockfile-lint": "^4.12.1",
 		"publint": "^0.2.6",
 		"semantic-release": "^22.0.8",
