@@ -6,7 +6,7 @@ A convenience wrapper around fetch for the browser (well, anything that has `fet
 
 This package’s files are distributed in the ES module format and have not been transpiled.
 
-Links:
+**Links**:
 
 - [demo](https://retrieve.netlify.app)
 - [**npmjs.com**/package/retrieve](https://www.npmjs.com/package/retrieve)
@@ -31,24 +31,24 @@ Why is it called `retrieve`? I wanted to call it `makeRequest` (I like clean and
 	- [As npm package](#as-npm-package)
 	- [As plain JS file](#as-plain-js-file)
 - [Documentation](#documentation)
-  - [Parameters](#parameters)
-    - [`config`](#config)
-      - [`url`](#url)
-      - [`baseUrl`](#baseurl-optional)
-      - [`params`](#params-optional)
-      - [`init`](#init-optional)
-      - [`data`](#data-optional)
-      - [`requestErrorMessage`](#requesterrormessage-optional)
-      - [`responseErrorMessage`](#responseerrormessage-optional)
-      - [`timeout`](#timeout-optional)
-      - [`beforeRequestHandlers`](#beforerequesthandlers-optional)
-      - [`requestErrorHandlers`](#requesterrorhandlers-optional)
-      - [`responseSuccessHandlers`](#responsesuccesshandlers-optional)
-      - [`responseErrorHandlers`](#responseerrorhandlers-optional)
-  - [Return value](#return-value)
-  - [Exceptions](#exceptions)
-    - [`TypeError`](#typeerror)
-    - [`ResponseError`](#responseerror)
+	- [Parameters](#parameters)
+		- [`config`](#config)
+			- [`url`](#url)
+			- [`baseUrl`](#baseurl-optional)
+			- [`params`](#params-optional)
+			- [`init`](#init-optional)
+			- [`data`](#data-optional)
+			- [`requestErrorMessage`](#requesterrormessage-optional)
+			- [`responseErrorMessage`](#responseerrormessage-optional)
+			- [`timeout`](#timeout-optional)
+			- [`beforeRequestHandlers`](#beforerequesthandlers-optional)
+			- [`requestErrorHandlers`](#requesterrorhandlers-optional)
+			- [`responseSuccessHandlers`](#responsesuccesshandlers-optional)
+			- [`responseErrorHandlers`](#responseerrorhandlers-optional)
+	- [Return value](#return-value)
+	- [Exceptions](#exceptions)
+		- [`TypeError`](#typeerror)
+		- [`ResponseError`](#responseerror)
 - [Examples](#examples)
 	- [Example 1: make simple API request](#example-1-make-simple-api-request)
 	- [Example 2: use response error](#example-2-use-response-error)
@@ -93,7 +93,7 @@ curl -O 'https://cdn.jsdelivr.net/npm/retrieve@latest/dist/retrieve.js'
 Import the `retrieve` function and use it.
 
 ```html
-<script type='module'>
+<script type="module">
 	import { retrieve } from './retrieve.js'
 
 	const { data, response } = await retrieve({ url: 'http://example.org' })
