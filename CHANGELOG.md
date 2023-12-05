@@ -1,3 +1,12 @@
+## [1.2.1](https://github.com/kleinfreund/retrieve/compare/v1.2.0...v1.2.1) (2023-12-05)
+
+
+### Bug Fixes
+
+* crash on window access in node environments ([bf014f3](https://github.com/kleinfreund/retrieve/commit/bf014f352fd3a0eaec3e2b8b0de8415bc00b5d39))
+
+  Fix retrieve not working in Node environments caused by accessing `window` without first checking if it exists.
+
 ## [1.2.0](https://github.com/kleinfreund/retrieve/compare/v1.1.1...v1.2.0) (2023-11-25)
 
 
