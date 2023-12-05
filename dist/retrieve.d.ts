@@ -5,13 +5,13 @@ interface RetrieveConfig {
      * - `URL`: Will be used as-is.
      * - `string`:
      *   - Absolute URL string: Will be used as-is.
-     *   - Relative URL path string: Will be turned into an absolute URL (using `config.baseUrl` if set; otherwise `window.location.origin`).
+     *   - Relative URL path string: Will be turned into an absolute URL (using `config.baseUrl`).
      */
     url: string | URL;
     /**
      * Base for request URL. Ignored if `url` is a URL object or an absolute URL string.
      *
-     * **Default**: `window.location.origin`
+     * **Default**: `window.location.origin` in browser environments; otherwise, `undefined`
      */
     baseUrl?: string | URL;
     /**

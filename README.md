@@ -2,7 +2,7 @@
 
 [![Tests passing](https://github.com/kleinfreund/retrieve/workflows/Tests/badge.svg)](https://github.com/kleinfreund/retrieve/actions)
 
-A convenience wrapper around fetch for the browser (well, anything that has `fetch` really).
+A convenience wrapper around fetch for the browser (and anything that has `fetch`).
 
 This package’s files are distributed in the ES module format and have not been transpiled.
 
@@ -124,11 +124,11 @@ The request URL.
 - `URL`: Will be used as-is.
 - `string`:
 	- Absolute URL string: Will be used as-is.
-	- Relative URL path string: Will be turned into an absolute URL (using `config.baseUrl` if set; otherwise `window.location.origin`).
+	- Relative URL path string: Will be turned into an absolute URL (using `config.baseUrl`).
 
 ##### `baseUrl` (optional)
 
-**Default**: `window.location.origin`
+**Default**: `window.location.origin` in browser environments; otherwise, `undefined`
 
 Base for request URL. Ignored if `config.url` is a `URL` object or an absolute URL `string`.
 
