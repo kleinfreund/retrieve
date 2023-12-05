@@ -38,7 +38,9 @@
 	"scripts": {
 		"build": "tsup",
 		"start": "vite",
-		"test": "cross-env TZ=UTC vitest run --coverage --reporter verbose",
+		"test": "npm run test:browser",
+		"test:browser": "cross-env TZ=UTC vitest run --environment jsdom",
+		"test:node": "cross-env TZ=UTC vitest run --environment node",
 		"lint:code": "eslint --ext .ts .",
 		"lint:code:fix": "npm run lint:code -- --fix",
 		"lint:lockfile": "lockfile-lint --path package-lock.json --validate-hosts --allowed-hosts npm",

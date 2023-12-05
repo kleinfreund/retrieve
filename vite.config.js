@@ -6,7 +6,9 @@ export default defineConfig({
 	test: {
 		environment: 'jsdom',
 		coverage: {
+			enabled: true,
 			include: ['src'],
 		},
+		reporters: 'verbose',
 	},
 })
