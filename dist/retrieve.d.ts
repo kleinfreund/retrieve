@@ -237,8 +237,9 @@ declare function retrieve(config: RetrieveConfig): Promise<RetrieveResponse>;
 
 declare class ResponseError extends Error {
     name: string;
-    response: Response;
-    constructor(response: Response, message?: string, options?: {
+    data: RetrieveResponse['data'];
+    response: RetrieveResponse['response'];
+    constructor(retrieveResponse: RetrieveResponse, message?: string, options?: {
         cause?: unknown;
     });
     toJSON(): {

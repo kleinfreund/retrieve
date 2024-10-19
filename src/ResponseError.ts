@@ -1,11 +1,15 @@
+import type { RetrieveResponse } from './retrieve.js'
+
 export class ResponseError extends Error {
 	name = 'ResponseError'
-	response: Response
+	data: RetrieveResponse['data']
+	response: RetrieveResponse['response']
 
-	constructor(response: Response, message?: string, options?: { cause?: unknown }) {
-		super(message || `${response.status} ${response.statusText}`.trim(), options)
+	constructor(retrieveResponse: RetrieveResponse, message?: string, options?: { cause?: unknown }) {
+		super(message || `${retrieveResponse.response.status} ${retrieveResponse.response.statusText}`.trim(), options)
 
-		this.response = response
+		this.data = retrieveResponse.data
+		this.response = retrieveResponse.response
 	}
 
 	toJSON() {

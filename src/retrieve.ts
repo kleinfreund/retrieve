@@ -320,7 +320,7 @@ export async function retrieve(config: RetrieveConfig): Promise<RetrieveResponse
 		return retrieveResponse
 	}
 
-	let error: Error = new ResponseError(response, config.responseErrorMessage)
+	let error: Error = new ResponseError(retrieveResponse, config.responseErrorMessage)
 
 	for (const responseErrorHandler of config.responseErrorHandlers ?? []) {
 		const result = await responseErrorHandler(error, retrieveResponse, ...fetchParams)
@@ -470,6 +470,6 @@ async function createRetrieveResponse(response: Response): Promise<RetrieveRespo
 			errorOptions.cause = error.cause
 		}
 
-		throw new ResponseError(response, error.message, errorOptions)
+		throw new ResponseError({ response, data: null }, error.message, errorOptions)
 	}
 }

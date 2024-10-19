@@ -12,14 +12,14 @@ describe('ResponseError', () => {
 			},
 		],
 	])('toJSON produces expected result', (message, response, expectedToJsonObject) => {
-		const responseError = new ResponseError(response, message)
+		const responseError = new ResponseError({ response, data: null }, message)
 
 		expect(responseError.toJSON()).toEqual(expectedToJsonObject)
 	})
 
 	test('holds reference to response object', () => {
 		const response = new Response()
-		const responseError = new ResponseError(response, 'Error message')
+		const responseError = new ResponseError({ response, data: null }, 'Error message')
 
 		expect(responseError.response).toBe(response)
 	})
@@ -38,7 +38,7 @@ describe('ResponseError', () => {
 			'Error message',
 		],
 	])('has the expected message', (message, expectedMessage) => {
-		const responseError = new ResponseError(new Response(undefined, { status: 200, statusText: 'OK' }), message)
+		const responseError = new ResponseError({ response: new Response(undefined, { status: 200, statusText: 'OK' }), data: null }, message)
 
 		expect(responseError.message).toBe(expectedMessage)
 	})

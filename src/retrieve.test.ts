@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { retrieve, type RetrieveConfig } from './retrieve.js'
+import { ResponseError } from './ResponseError.js'
 
 describe('retrieve', () => {
 	beforeEach(() => {
@@ -665,7 +666,7 @@ describe('retrieve', () => {
 		})
 
 		describe('responses with status codes >=300', () => {
-			test.each<[string, typeof fetch, Error]>([
+			test.each<[string, typeof fetch, Error, unknown]>([
 				[
 					'no content-type',
 					function () {
@@ -677,6 +678,7 @@ describe('retrieve', () => {
 						return Promise.resolve(response)
 					},
 					new Error('400 Bad Request'),
+					null,
 				],
 				[
 					'plain/text',
@@ -692,6 +694,7 @@ describe('retrieve', () => {
 						return Promise.resolve(response)
 					},
 					new Error('400 Bad Request'),
+					'Oopsie!',
 				],
 				[
 					'application/json',
@@ -707,6 +710,9 @@ describe('retrieve', () => {
 						return Promise.resolve(response)
 					},
 					new Error('400 Bad Request'),
+					{
+						error: 'oh no',
+					},
 				],
 				[
 					'application/json; charset=utf-8',
@@ -722,6 +728,9 @@ describe('retrieve', () => {
 						return Promise.resolve(response)
 					},
 					new Error('400 Bad Request'),
+					{
+						error: 'oh no',
+					},
 				],
 				[
 					'application/problem+json; charset=utf-8',
@@ -737,12 +746,21 @@ describe('retrieve', () => {
 						return Promise.resolve(response)
 					},
 					new Error('400 Bad Request'),
+					{
+						error: 'oh no',
+					},
 				],
-			])('handles content-type %s', async (_title, fetchMock, expectedError) => {
+			])('handles content-type %s', async (_title, fetchMock, expectedError, expectedData) => {
 				vi.spyOn(globalThis, 'fetch').mockImplementation(fetchMock)
 
-				const promise = retrieve({ url: 'http://example.org' })
-				await expect(promise).rejects.toThrow(expectedError)
+				try {
+					await retrieve({ url: 'http://example.org' })
+				} catch (error) {
+					expect(error).toEqual(expectedError)
+					expect(error instanceof ResponseError).toBe(true)
+					const err = error as ResponseError
+					expect(err.data).toEqual(expectedData)
+				}
 			})
 
 			test('response error has cause if present on underlying error', async () => {

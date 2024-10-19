@@ -334,7 +334,7 @@ A `TypeError` is thrown when `fetch` does (see [fetch() global function: Excepti
 
 A `ResponseError` is thrown for `fetch` responses with a status code >=300.
 
-By default, this error will be an instance of `ResponseError` which will have access to the original `Response` object returned by `fetch`:
+By default, this error will be an instance of `ResponseError` which will have access to the original `Response` object returned by `fetch` and the deserialized `data` also found on `RetrieveResponse` objects:
 
 ```js
 try {
@@ -343,7 +343,7 @@ try {
 	})
 } catch (error) {
 	if (error instanceof ResponseError) {
-		console.log(error.response)
+		console.log(error.response, error.data)
 	}
 }
 ```
@@ -375,6 +375,9 @@ async function example() {
 		})
 	} catch (error) {
 		console.dir(error)
+		if (error instanceof ResponseError) {
+			console.log(error.data)
+		}
 	}
 }
 
