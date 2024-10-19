@@ -204,7 +204,7 @@ interface RetrieveConfig {
      */
     responseErrorHandlers?: ResponseErrorHandler[];
 }
-type RetrieveResponse = {
+interface RetrieveResponse {
     /**
      * Original `Response` object as returned by `fetch`.
      */
@@ -218,7 +218,7 @@ type RetrieveResponse = {
      * - For everything else: the response body is parsed as text (using `Response.prototype.text`).
      */
     data: unknown;
-};
+}
 interface ErrorCorrectedResult {
     status: 'corrected';
     value: Response;
