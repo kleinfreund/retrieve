@@ -1,5 +1,5 @@
 import { retrieve, ResponseError } from './dist/retrieve.js'
-/** @typedef {import('./src/retrieve.js').RetrieveConfig} RetrieveConfig */
+/** @import { RetrieveConfig } from './src/retrieve.js' */
 
 Object.defineProperty(window, 'retrieve', { value: retrieve })
 Object.defineProperty(window, 'ResponseError', { value: ResponseError })

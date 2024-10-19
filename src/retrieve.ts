@@ -220,7 +220,7 @@ export interface RetrieveConfig {
 	responseErrorHandlers?: ResponseErrorHandler[]
 }
 
-export type RetrieveResponse = {
+export interface RetrieveResponse {
 	/**
 	 * Original `Response` object as returned by `fetch`.
 	 */
@@ -247,7 +247,7 @@ export interface ErrorMaintainedResult<ErrorType> {
 	value: ErrorType
 }
 
-export type ErrorHandlerResult<ErrorType = Error> = ErrorCorrectedResult | ErrorMaintainedResult<ErrorType>;
+export type ErrorHandlerResult<ErrorType = Error> = ErrorCorrectedResult | ErrorMaintainedResult<ErrorType>
 
 export type RetrieveFetchParams = [RetrieveConfig['url'], RequestInit]
 
