@@ -628,7 +628,7 @@ describe('retrieve', () => {
 
 				const { data, response } = await retrieve({ url: 'http://example.org' })
 
-				function getData(data: unknown) {
+				function getData (data: unknown) {
 					// For some reason, the `FormData` object created using `Response.prototype.formData()` in this test environment has a different structure than `new FormData()` and, worse, fails “formData instanceof FormData”. The following is an extremely poor workaround to this problem: As long as I can find an `entries` method on `data`, I can convert `data` into an array of entries and compare it with the expected data.
 					return data && typeof data === 'object' && 'entries' in data && typeof data?.entries === 'function' ? Array.from(data.entries()) : data
 				}
@@ -1037,12 +1037,12 @@ describe('retrieve', () => {
 			class ApiError extends Error {
 				code: string | null = null
 
-				constructor(message: string, code: string | null = null) {
+				constructor (message: string, code: string | null = null) {
 					super(message)
 					this.code = code
 				}
 
-				toJSON() {
+				toJSON () {
 					return {
 						code: this.code,
 						message: this.message,

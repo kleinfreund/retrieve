@@ -24,6 +24,7 @@ export default tseslint.config(
 			'@stylistic/comma-dangle': ['error', 'always-multiline'],
 			'@stylistic/indent': ['error', 'tab'],
 			'@stylistic/semi': ['error', 'never'],
+			'@stylistic/space-before-function-paren': ['error', 'always'],
 			'@stylistic/quotes': ['error', 'single'],
 		},
 	},

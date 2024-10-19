@@ -5,14 +5,14 @@ export class ResponseError extends Error {
 	data: RetrieveResponse['data']
 	response: RetrieveResponse['response']
 
-	constructor(retrieveResponse: RetrieveResponse, message?: string, options?: { cause?: unknown }) {
+	constructor (retrieveResponse: RetrieveResponse, message?: string, options?: { cause?: unknown }) {
 		super(message || `${retrieveResponse.response.status} ${retrieveResponse.response.statusText}`.trim(), options)
 
 		this.data = retrieveResponse.data
 		this.response = retrieveResponse.response
 	}
 
-	toJSON() {
+	toJSON () {
 		return {
 			name: this.name,
 			message: this.message,

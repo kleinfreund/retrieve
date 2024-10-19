@@ -12,7 +12,7 @@ forms.filter((form) => form.method === 'get')
 forms.filter((form) => form.method === 'post')
 	.forEach((form) => form.addEventListener('submit', handlePostSubmit))
 
-async function handleGetSubmit(event) {
+async function handleGetSubmit (event) {
 	event.preventDefault()
 
 	const form = /** @type {HTMLFormElement} */ (event.target)
@@ -34,7 +34,7 @@ async function handleGetSubmit(event) {
 	}
 }
 
-async function handlePostSubmit(event) {
+async function handlePostSubmit (event) {
 	event.preventDefault()
 
 	const form = /** @type {HTMLFormElement} */ (event.target)

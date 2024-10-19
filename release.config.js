@@ -5,7 +5,7 @@ const commitPartial = readFileSync('./changelog-template-commit.hbs', { encoding
 /**
  * Adds the commit body line by line so I can add it with the correct indentation in `changelog-template-commit.hbs`.
  */
-function finalizeContext(context) {
+function finalizeContext (context) {
 	for (const commitGroup of context.commitGroups) {
 		for (const commit of commitGroup.commits) {
 			commit.bodyLines = commit.body?.split('\n').filter((line) => line !== '') ?? []
