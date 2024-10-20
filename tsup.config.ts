@@ -1,5 +1,6 @@
 import { defineConfig } from 'tsup'
-import pkg from './package.json' assert { type: 'json' }
+
+import pkg from './package.json' with { type: 'json' }
 
 // https://tsup.egoist.dev
 export default defineConfig({
