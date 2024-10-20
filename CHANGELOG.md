@@ -1,3 +1,17 @@
+## [2.0.0](https://github.com/kleinfreund/retrieve/compare/v1.2.1...v2.0.0) (2024-10-20)
+
+### ⚠ BREAKING CHANGES
+
+* Change the first parameter of `ResponseError` to expect a `RetrieveResponse` object instead of a `Response` object. **How to update**: Replace `new ResponseError(response, ...)` with `new ResponseError({ response, data: null }, ...)`.
+
+### Features
+
+* add data to ResponseError ([bdddbdc](https://github.com/kleinfreund/retrieve/commit/bdddbdc5190442d4a7a357629e95eeaa763d5a1b))
+
+  Add a new `data` property to `ResponseError`s holding the same deserialized value as the `data` property on `RetrieveResponse` objects. If an exception occurs during deserialization, the value will be `null`.
+
+  **BREAKING CHANGE**: Change the first parameter of `ResponseError` to expect a `RetrieveResponse` object instead of a `Response` object. **How to update**: Replace `new ResponseError(response, ...)` with `new ResponseError({ response, data: null }, ...)`.
+
 ## [1.2.1](https://github.com/kleinfreund/retrieve/compare/v1.2.0...v1.2.1) (2023-12-05)
 
 
