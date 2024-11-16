@@ -276,7 +276,7 @@ const CONTENT_TYPES: Record<BodyType, string> = {
 	text: CONTENT_TYPE_TEXT,
 }
 
-export async function retrieve(config: RetrieveConfig): Promise<RetrieveResponse> {
+export async function retrieve (config: RetrieveConfig): Promise<RetrieveResponse> {
 	const url = createUrl(config)
 	const init = createInit(config)
 
@@ -344,7 +344,7 @@ export async function retrieve(config: RetrieveConfig): Promise<RetrieveResponse
 /**
  * Creates a `URL` object that will be passed to `fetch` as its `input` parameter.
  */
-function createUrl(config: RetrieveConfig): URL {
+function createUrl (config: RetrieveConfig): URL {
 	// Process request URL
 	const baseUrl = config.baseUrl ?? (typeof window !== 'undefined' ? window.location.origin : undefined)
 	const url = new URL(config.url, baseUrl)
@@ -366,7 +366,7 @@ function createUrl(config: RetrieveConfig): URL {
 /**
  * Creates an `RequestInit` object that will be passed to `fetch` as its `init` parameter.
  */
-function createInit(config: RetrieveConfig): RequestInit {
+function createInit (config: RetrieveConfig): RequestInit {
 	const originalInit = config.init ?? {}
 	const init: RequestInit = { ...originalInit }
 
@@ -425,7 +425,7 @@ function createInit(config: RetrieveConfig): RequestInit {
 	return init
 }
 
-function createRequestError(error: unknown, requestErrorMessage?: string): Error {
+function createRequestError (error: unknown, requestErrorMessage?: string): Error {
 	const requestError = error instanceof Error ? error : new Error()
 
 	if (requestError.message) {
@@ -447,7 +447,7 @@ function createRequestError(error: unknown, requestErrorMessage?: string): Error
 /**
  * Takes a `Response` object and deserializes its body (if set)
  */
-async function createRetrieveResponse(response: Response): Promise<RetrieveResponse> {
+async function createRetrieveResponse (response: Response): Promise<RetrieveResponse> {
 	const contentType = response.headers.get(CONTENT_TYPE) ?? ''
 	let bodyType: BodyType | undefined
 
