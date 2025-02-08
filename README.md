@@ -260,7 +260,7 @@ Exceptions during the processing of a response success handler are not caught.
 ```js
 const config = {
 	url: 'https://api.example.org',
-	responseErrorHandlers: [
+	responseSuccessHandlers: [
 		async (retrieveResponse, url, init) => {
 			// Do something with retrieveResponse
 			return retrieveResponse
