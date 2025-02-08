@@ -523,10 +523,16 @@ describe('retrieve', () => {
 					new Error('Custom error message', { cause: 'Original error message' }),
 				],
 			])('%s', async (_title, fetchMock, config, expectedError) => {
-				vi.spyOn(globalThis, 'fetch').mockImplementation(fetchMock)
+				const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(fetchMock)
 
-				const promise = retrieve(config)
-				await expect(promise).rejects.toThrowError(expectedError)
+				try {
+					await retrieve(config)
+				} catch (error) {
+					expect(error instanceof Error).toBe(true)
+					const err = error as Error
+					expect(err.message).toEqual(expectedError.message)
+				}
+				expect(spy).toHaveBeenCalledTimes(1)
 			})
 		})
 
@@ -657,11 +663,16 @@ describe('retrieve', () => {
 				vi.spyOn(Response.prototype, 'json').mockImplementation(() => {
 					throw new Error('Expected property name or \'}\' in JSON at position 1')
 				})
-				vi.spyOn(globalThis, 'fetch').mockImplementation(fetchMock)
+				const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(fetchMock)
 
-				const promise = retrieve({ url: 'http://example.org' })
-
-				await expect(promise).rejects.toThrowError(expectedError)
+				try {
+					await retrieve({ url: 'http://example.org' })
+				} catch (error) {
+					expect(error instanceof ResponseError).toBe(true)
+					const err = error as ResponseError
+					expect(err.message).toEqual(expectedError.message)
+				}
+				expect(spy).toHaveBeenCalledTimes(1)
 			})
 		})
 
@@ -751,16 +762,17 @@ describe('retrieve', () => {
 					},
 				],
 			])('handles content-type %s', async (_title, fetchMock, expectedError, expectedData) => {
-				vi.spyOn(globalThis, 'fetch').mockImplementation(fetchMock)
+				const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(fetchMock)
 
 				try {
 					await retrieve({ url: 'http://example.org' })
 				} catch (error) {
-					expect(error).toEqual(expectedError)
 					expect(error instanceof ResponseError).toBe(true)
 					const err = error as ResponseError
+					expect(err.message).toEqual(expectedError.message)
 					expect(err.data).toEqual(expectedData)
 				}
+				expect(spy).toHaveBeenCalledTimes(1)
 			})
 
 			test('response error has cause if present on underlying error', async () => {
@@ -873,10 +885,16 @@ describe('retrieve', () => {
 					new Error('Overridden error'),
 				],
 			])('onRequestError handlers produce error', async (config, expectedError) => {
-				vi.spyOn(globalThis, 'fetch').mockImplementation(() => Promise.reject(new Error('Standard error')))
+				const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(() => Promise.reject(new Error('Standard error')))
 
-				const promise = retrieve(config)
-				await expect(promise).rejects.toThrowError(expectedError)
+				try {
+					await retrieve(config)
+				} catch (error) {
+					expect(error instanceof Error).toBe(true)
+					const err = error as Error
+					expect(err.message).toEqual(expectedError.message)
+				}
+				expect(spy).toHaveBeenCalledTimes(1)
 			})
 
 			test.each<[RetrieveConfig, unknown]>([
@@ -979,10 +997,16 @@ describe('retrieve', () => {
 					new Error('Altered message'),
 				],
 			])('onResponseError handlers produce error', async (config, expectedError) => {
-				vi.spyOn(globalThis, 'fetch').mockImplementation(() => Promise.resolve(new Response('Unauthorized', { status: 401 })))
+				const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(() => Promise.resolve(new Response('Unauthorized', { status: 401 })))
 
-				const promise = retrieve(config)
-				await expect(promise).rejects.toThrowError(expectedError)
+				try {
+					await retrieve(config)
+				} catch (error) {
+					expect(error instanceof Error).toBe(true)
+					const err = error as Error
+					expect(err.message).toEqual(expectedError.message)
+				}
+				expect(spy).toHaveBeenCalledTimes(1)
 			})
 
 			test.each<[RetrieveConfig, unknown]>([
