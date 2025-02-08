@@ -70,7 +70,7 @@
 		"eslint": "^9.20.0",
 		"globals": "^15.14.0",
 		"husky": "^9.1.7",
-		"jsdom": "^25.0.1",
+		"jsdom": "^26.0.0",
 		"lockfile-lint": "^4.14.0",
 		"npm-run-all2": "^7.0.2",
 		"publint": "^0.3.4",
