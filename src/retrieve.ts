@@ -222,6 +222,11 @@ export interface RetrieveConfig {
 
 export interface RetrieveResponse {
 	/**
+	 * Original `Request` object passed to `fetch`.
+	 */
+	request: Request
+
+	/**
 	 * Original `Response` object as returned by `fetch`.
 	 */
 	response: Response
@@ -285,10 +290,11 @@ export async function retrieve (config: RetrieveConfig): Promise<RetrieveRespons
 		fetchParams = await beforeRequestHandler(...fetchParams)
 	}
 
+	const request = new Request(...fetchParams)
 	let response: Response | undefined
 
 	try {
-		response = await fetch(...fetchParams)
+		response = await fetch(request)
 	} catch (error) {
 		let requestError = createRequestError(error, config.requestErrorMessage)
 
@@ -310,7 +316,7 @@ export async function retrieve (config: RetrieveConfig): Promise<RetrieveRespons
 		// Conversely, `response` being set here is the signal for the request error to have been corrected by a request error handler and for retrieve to move on to processing the response as if no request error had occurred in the first place.
 	}
 
-	let retrieveResponse = await createRetrieveResponse(response)
+	let retrieveResponse = await createRetrieveResponse(request, response)
 
 	if (retrieveResponse.response.ok) {
 		for (const responseSuccessHandler of config.responseSuccessHandlers ?? []) {
@@ -326,7 +332,7 @@ export async function retrieve (config: RetrieveConfig): Promise<RetrieveRespons
 		const result = await responseErrorHandler(error, retrieveResponse, ...fetchParams)
 
 		if (result.status === 'corrected') {
-			retrieveResponse = await createRetrieveResponse(result.value)
+			retrieveResponse = await createRetrieveResponse(request, result.value)
 			// At this point, the current response error handler has corrected the error state (by returning a new `retrieveResponse` object) and we stop processing any further response error handlers.
 			break
 		} else {
@@ -447,7 +453,7 @@ function createRequestError (error: unknown, requestErrorMessage?: string): Erro
 /**
  * Takes a `Response` object and deserializes its body (if set)
  */
-async function createRetrieveResponse (response: Response): Promise<RetrieveResponse> {
+async function createRetrieveResponse (request: Request, response: Response): Promise<RetrieveResponse> {
 	const contentType = response.headers.get(CONTENT_TYPE) ?? ''
 	let bodyType: BodyType | undefined
 
@@ -462,7 +468,7 @@ async function createRetrieveResponse (response: Response): Promise<RetrieveResp
 	try {
 		const data = bodyType ? await response[bodyType]() : null
 
-		return { response, data }
+		return { request, response, data }
 	} catch (err) {
 		const error = err as Error
 		const errorOptions: ErrorOptions = {}
@@ -470,6 +476,6 @@ async function createRetrieveResponse (response: Response): Promise<RetrieveResp
 			errorOptions.cause = error.cause
 		}
 
-		throw new ResponseError({ response, data: null }, error.message, errorOptions)
+		throw new ResponseError({ request, response, data: null }, error.message, errorOptions)
 	}
 }

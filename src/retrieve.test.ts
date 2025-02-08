@@ -3,6 +3,65 @@ import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'vit
 import { retrieve, type RetrieveConfig } from './retrieve.js'
 import { ResponseError } from './ResponseError.js'
 
+expect.extend({
+	toMatchRequest (received: Request, expected: Request) {
+		const { equals, isNot } = this
+
+		const receivedStructure = getRequestStructure(received)
+		const expectedStructure = getRequestStructure(expected)
+
+		return {
+			pass: equals(receivedStructure, expectedStructure),
+			message: () => `Expected Requests to${isNot ? ' not' : ''} match`,
+			actual: JSON.stringify(receivedStructure, null, 1),
+			expected: JSON.stringify(expectedStructure, null, 1),
+		}
+	},
+})
+
+/**
+ * Convert a `Request` object to a simple object structure so it can be easily compared with another `Request` object structure.
+ *
+ * Does not handle `body`.
+ */
+function getRequestStructure ({
+	bodyUsed,
+	cache,
+	credentials,
+	destination,
+	headers,
+	integrity,
+	keepalive,
+	method,
+	mode,
+	redirect,
+	referrer,
+	referrerPolicy,
+	url,
+}: Request) {
+	// Set a stable multipart form-data boundary as it seems to be completely random.
+	const headersCopy = new Headers(headers)
+	if (headersCopy.get('content-type')?.startsWith('multipart/form-data; boundary=----')) {
+		headersCopy.set('content-type', 'multipart/form-data; boundary=----boundary1234')
+	}
+
+	return {
+		bodyUsed,
+		cache,
+		credentials,
+		destination,
+		headers: Object.fromEntries(headersCopy.entries()),
+		integrity,
+		keepalive,
+		method,
+		mode,
+		redirect,
+		referrer,
+		referrerPolicy,
+		url,
+	}
+}
+
 describe('retrieve', () => {
 	beforeEach(() => {
 		vi.restoreAllMocks()
@@ -64,22 +123,46 @@ describe('retrieve', () => {
 					new URL('http://example.org/path'),
 				],
 			])('%s', async (_title, config, expectedInput) => {
-				vi.spyOn(globalThis, 'fetch').mockImplementation(() => Promise.resolve(new Response('OK')))
+				vi.spyOn(globalThis, 'fetch').mockImplementation((...parameters) => {
+					expect(new Request(...parameters)).toMatchRequest(new Request(expectedInput, {
+						method: 'GET',
+						headers: new Headers({
+							'x-requested-with': 'XMLHttpRequest',
+						}),
+					}))
+
+					return Promise.resolve(new Response('OK'))
+				})
 
 				await retrieve(config)
 
-				expect(fetch).toHaveBeenCalledWith(expectedInput, {
-					method: 'GET',
-					headers: new Headers({
-						'x-requested-with': 'XMLHttpRequest',
-					}),
-				})
+				expect(fetch).toHaveBeenCalledTimes(1)
 			})
 		})
 
 		describe('init', () => {
 			test('config.init parameters are passed to fetch', async () => {
-				vi.spyOn(globalThis, 'fetch').mockImplementation(() => Promise.resolve(new Response('OK')))
+				vi.spyOn(globalThis, 'fetch').mockImplementation((...parameters) => {
+					expect(new Request(...parameters)).toMatchRequest(new Request(new URL('http://example.org'), {
+						body: 'body',
+						cache: 'default',
+						credentials: 'same-origin',
+						headers: new Headers({
+							'x-test-header': 'header-value',
+							'x-requested-with': 'XMLHttpRequest',
+						}),
+						integrity: 'hash',
+						keepalive: true,
+						method: 'POST',
+						mode: 'same-origin',
+						redirect: 'follow',
+						referrer: 'http://referrer.org',
+						signal: null,
+						window: null,
+					}))
+
+					return Promise.resolve(new Response('OK'))
+				})
 
 				await retrieve({
 					url: 'http://example.org',
@@ -95,29 +178,13 @@ describe('retrieve', () => {
 						method: 'POST',
 						mode: 'same-origin',
 						redirect: 'follow',
-						referrer: 'ref',
+						referrer: 'http://referrer.org',
 						signal: null,
 						window: null,
 					},
 				})
 
-				expect(fetch).toHaveBeenCalledWith(new URL('http://example.org'), {
-					body: 'body',
-					cache: 'default',
-					credentials: 'same-origin',
-					headers: new Headers({
-						'x-test-header': 'header-value',
-						'x-requested-with': 'XMLHttpRequest',
-					}),
-					integrity: 'hash',
-					keepalive: true,
-					method: 'POST',
-					mode: 'same-origin',
-					redirect: 'follow',
-					referrer: 'ref',
-					signal: null,
-					window: null,
-				})
+				expect(fetch).toHaveBeenCalledTimes(1)
 			})
 
 			describe('method', () => {
@@ -138,16 +205,20 @@ describe('retrieve', () => {
 						},
 					],
 				])('%s', async (_title, config) => {
-					vi.spyOn(globalThis, 'fetch').mockImplementation(() => Promise.resolve(new Response('OK')))
+					vi.spyOn(globalThis, 'fetch').mockImplementation((...parameters) => {
+						expect(new Request(...parameters)).toMatchRequest(new Request(new URL('http://example.org'), {
+							method: 'GET',
+							headers: new Headers({
+								'x-requested-with': 'XMLHttpRequest',
+							}),
+						}))
+
+						return Promise.resolve(new Response('OK'))
+					})
 
 					await retrieve(config)
 
-					expect(fetch).toHaveBeenCalledWith(new URL('http://example.org'), {
-						method: 'GET',
-						headers: new Headers({
-							'x-requested-with': 'XMLHttpRequest',
-						}),
-					})
+					expect(fetch).toHaveBeenCalledTimes(1)
 				})
 			})
 
@@ -211,10 +282,11 @@ describe('retrieve', () => {
 						'ArrayBuffer data sets content-type application/octet-stream',
 						{
 							url: 'http://example.org',
+							init: { method: 'POST' },
 							data: new ArrayBuffer(8),
 						},
 						{
-							method: 'GET',
+							method: 'POST',
 							headers: new Headers({
 								'x-requested-with': 'XMLHttpRequest',
 								'content-type': 'application/octet-stream',
@@ -226,10 +298,11 @@ describe('retrieve', () => {
 						'Blob data sets content-type application/octet-stream',
 						{
 							url: 'http://example.org',
+							init: { method: 'POST' },
 							data: new Blob(),
 						},
 						{
-							method: 'GET',
+							method: 'POST',
 							headers: new Headers({
 								'x-requested-with': 'XMLHttpRequest',
 								'content-type': 'application/octet-stream',
@@ -241,12 +314,14 @@ describe('retrieve', () => {
 						'FormData data sets content-type multipart/form-data (GET)',
 						{
 							url: 'http://example.org',
+							init: { method: 'POST' },
 							data: new FormData(),
 						},
 						{
-							method: 'GET',
+							method: 'POST',
 							headers: new Headers({
 								'x-requested-with': 'XMLHttpRequest',
+								'content-type': 'multipart/form-data; boundary=----formdata-undici-038113724717',
 								// Note: No “content-type” header is expected here as the browser will set it automatically for `FormData` request bodies.
 							}),
 							body: new FormData(),
@@ -317,11 +392,15 @@ describe('retrieve', () => {
 						},
 					],
 				])('%s', async (_title, config, expectedInit) => {
-					vi.spyOn(globalThis, 'fetch').mockImplementation(() => Promise.resolve(new Response('OK')))
+					vi.spyOn(globalThis, 'fetch').mockImplementation((...parameters) => {
+						expect(new Request(...parameters)).toMatchRequest(new Request(new URL('http://example.org'), expectedInit))
+
+						return Promise.resolve(new Response('OK'))
+					})
 
 					await retrieve(config)
 
-					expect(fetch).toHaveBeenCalledWith(new URL('http://example.org'), expectedInit)
+					expect(fetch).toHaveBeenCalledTimes(1)
 				})
 			})
 
@@ -424,11 +503,15 @@ describe('retrieve', () => {
 						},
 					],
 				])('%s', async (_title, config, expectedInit) => {
-					vi.spyOn(globalThis, 'fetch').mockImplementation(() => Promise.resolve(new Response('OK')))
+					vi.spyOn(globalThis, 'fetch').mockImplementation((...parameters) => {
+						expect(new Request(...parameters)).toMatchRequest(new Request(new URL('http://example.org'), expectedInit))
+
+						return Promise.resolve(new Response('OK'))
+					})
 
 					await retrieve(config)
 
-					expect(fetch).toHaveBeenCalledWith(new URL('http://example.org'), expectedInit)
+					expect(fetch).toHaveBeenCalledTimes(1)
 				})
 			})
 
@@ -853,11 +936,15 @@ describe('retrieve', () => {
 					},
 				],
 			])('onResponseSuccess handlers produce response', async (config, expectedInput, expectedInit) => {
-				vi.spyOn(globalThis, 'fetch').mockImplementation(() => Promise.resolve(new Response('OK')))
+				vi.spyOn(globalThis, 'fetch').mockImplementation((...parameters) => {
+					expect(new Request(...parameters)).toMatchRequest(new Request(expectedInput, expectedInit))
+
+					return Promise.resolve(new Response('OK'))
+				})
 
 				await retrieve(config)
 
-				expect(fetch).toHaveBeenCalledWith(expectedInput, expectedInit)
+				expect(fetch).toHaveBeenCalledTimes(1)
 			})
 		})
 
