@@ -32,18 +32,19 @@ Why is it called `retrieve`? I wanted to call it `makeRequest` (I like clean and
 - [Documentation](#documentation)
 	- [Parameters](#parameters)
 		- [`config`](#config)
-			- [`url`](#url)
-			- [`baseUrl`](#baseurl-optional)
-			- [`params`](#params-optional)
-			- [`init`](#init-optional)
-			- [`data`](#data-optional)
-			- [`requestErrorMessage`](#requesterrormessage-optional)
-			- [`responseErrorMessage`](#responseerrormessage-optional)
-			- [`timeout`](#timeout-optional)
-			- [`beforeRequestHandlers`](#beforerequesthandlers-optional)
-			- [`requestErrorHandlers`](#requesterrorhandlers-optional)
-			- [`responseSuccessHandlers`](#responsesuccesshandlers-optional)
-			- [`responseErrorHandlers`](#responseerrorhandlers-optional)
+			- [`config.url`](#configurl-required)
+			- [`config.baseUrl`](#configbaseurl-optional)
+			- [`config.params`](#configparams-optional)
+			- [`config.init`](#configinit-optional)
+			- [`config.data`](#configdata-optional)
+			- [`config.requestErrorMessage`](#configrequesterrormessage-optional)
+			- [`config.responseErrorMessage`](#configresponseerrormessage-optional)
+			- [`config.timeout`](#configtimeout-optional)
+			- [`config.beforeRequestHandlers`](#configbeforerequesthandlers-optional)
+			- [`config.requestErrorHandlers`](#configrequesterrorhandlers-optional)
+			- [`config.responseSuccessHandlers`](#configresponsesuccesshandlers-optional)
+			- [`config.responseErrorHandlers`](#configresponseerrorhandlers-optional)
+		- [`request`](#request)
 	- [Return value](#return-value)
 	- [Exceptions](#exceptions)
 		- [`TypeError`](#typeerror)
@@ -112,11 +113,13 @@ const { data } = await retrieve({
 
 ### Parameters
 
+The `retrieve` function takes one parameter, `configOrRequest`, which can be either a `RetrieveConfig` or `Request` object.
+
 #### `config`
 
-A `RetrieveConfig` object.
+A `RetrieveConfig` object. Read the following sections to learn more.
 
-##### `url`
+##### `config.url` (required)
 
 The request URL.
 
@@ -125,19 +128,21 @@ The request URL.
 	- Absolute URL string: Will be used as-is.
 	- Relative URL path string: Will be turned into an absolute URL (using `config.baseUrl`).
 
-##### `baseUrl` (optional)
+**Note**: Providing a `Request` object to `config.url` is intentionally not possible. If you want to use a `Request` object, provide it _instead_ of `config` (see [request](#request)).
+
+##### `config.baseUrl` (optional)
 
 **Default**: `window.location.origin` in browser environments; otherwise, `undefined`
 
 Base for request URL. Ignored if `config.url` is a `URL` object or an absolute URL `string`.
 
-##### `params` (optional)
+##### `config.params` (optional)
 
 Request query parameters. Will be appended to the request URL. Parameters already existing on the request URL will be overridden. New parameters will be added.
 
 FormData is intentionally not supported because it cannot be easily and reliably turned into an `URLSearchParams` object. If you can guarantee that your `FormData` object doesn't hold files, you can provide `config.params` using `new URLSearchParams(formData)`.
 
-##### `init` (optional)
+##### `config.init` (optional)
 
 Init object passed to `fetch`.
 
@@ -153,7 +158,7 @@ The following changes are made to the `init` object before it is passed to `fetc
 - **Body**: If `config.data` is set, it will be used for fetch's `init.body`. See `config.data` description for more information. Otherwise, if `config.init.body` is set, it will be used for fetch's `init.body`.
 - **Signal**: If `config.timeout` is set to a positive number, it will be used to create fetch's `init.signal` using `AbortSignal.timeout(config.timeout)`.
 
-##### `data` (optional)
+##### `config.data` (optional)
 
 Request body data.
 
@@ -162,7 +167,7 @@ If `config.data` is set:
 - … and the “content-type” header is “application/json”, `init.body` is set to the result of `JSON.stringify(config.data)`
 - … otherwise, `init.body` is set to `config.data`. It's your responsibility to make sure `config.data` can be used on `init.body` (see [fetch() global function: parameters](https://developer.mozilla.org/en-US/docs/Web/API/fetch#parameters)).
 
-##### `requestErrorMessage` (optional)
+##### `config.requestErrorMessage` (optional)
 
 **Default**: `'Unknown request error'`
 
@@ -170,19 +175,19 @@ Message for request errors.
 
 If set, it overrides the underlying error's own message which will then be set on the request error's `cause` property.
 
-##### `responseErrorMessage` (optional)
+##### `config.responseErrorMessage` (optional)
 
 **Default**: `$statusCode $statusText` (e.g. `'404 Not Found'`)
 
 Message for response errors.
 
-##### `timeout` (optional)
+##### `config.timeout` (optional)
 
 **Default**: `0` (no timeout)
 
 Request timeout in milliseconds.
 
-##### `beforeRequestHandlers` (optional)
+##### `config.beforeRequestHandlers` (optional)
 
 Run right before a request is sent (i.e. before calling `fetch`). Allows making changes to the parameters passed to `fetch` after they've been processed by `retrieve`. Also allows skipping the call to `fetch` entirely.
 
@@ -208,7 +213,7 @@ const config = {
 }
 ```
 
-##### `requestErrorHandlers` (optional)
+##### `config.requestErrorHandlers` (optional)
 
 Run when sending the request failed (i.e. the promise returned by `fetch` was rejected). Allows implementing corrective measures.
 
@@ -252,7 +257,7 @@ const config = {
 }
 ```
 
-##### `responseSuccessHandlers` (optional)
+##### `config.responseSuccessHandlers` (optional)
 
 Run when sending the request succeeded and a response with a status code 200–299 was returned (i.e. the promise returned by `fetch` is fulfilled and yields a `Response` object whose `ok` property is set to `true`).
 
@@ -271,7 +276,7 @@ const config = {
 }
 ```
 
-##### `responseErrorHandlers` (optional)
+##### `config.responseErrorHandlers` (optional)
 
 Run when sending the request succeeded and a response with a status code >=300 was returned (i.e. the promise returned by `fetch` is fulfilled and yields a `Response` object whose `ok` property is set to `false`).
 
@@ -320,6 +325,10 @@ const config = {
 	],
 }
 ```
+
+#### `request`
+
+When providing a `Request` object (instead of a `RetrieveConfig` object) to `retrieve`, all of retrieve's preprocessing steps are skipped and no interceptors are run. The `Request` object is instead directly passed to `fetch`. This is useful when retrying requests in `config.responseErrorHandlers`, for example.
 
 ### Return value
 

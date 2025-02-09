@@ -246,11 +246,25 @@ const CONTENT_TYPES: Record<BodyType, string> = {
 	text: CONTENT_TYPE_TEXT,
 }
 
-export async function retrieve (config: RetrieveConfig): Promise<RetrieveResponse> {
-	const url = createUrl(config)
-	const init = createInit(config)
+/**
+ * Takes a `RetrieveConfig` or `Request` object and calls `fetch` using it data.
+ *
+ * When providing a `RetrieveConfig`, several preprocessing steps are performed before creating a `Request` object. That `Request` object is then passed to any `config.beforeRequestHandlers` before it's ultimately passed to `fetch`.
+ *
+ * When providing a `Request` object, no preprocessing steps are performed and no interceptors are executed. The `Request` is passed to `fetch` directly.
+ */
+export async function retrieve (configOrRequest: RetrieveConfig | Request): Promise<RetrieveResponse> {
+	let config, request
+	if (configOrRequest instanceof Request) {
+		config = { url: new URL(configOrRequest.url) }
+		request = configOrRequest
+	} else {
+		config = configOrRequest
+		const url = createUrl(config)
+		const init = createInit(config)
+		request = new Request(url, init)
+	}
 
-	let request = new Request(url, init)
 	let response: Response | undefined
 
 	for (const beforeRequestHandler of config.beforeRequestHandlers ?? []) {
