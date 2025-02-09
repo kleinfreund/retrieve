@@ -192,11 +192,11 @@ Processed right before a request is sent (i.e. before calling `fetch`). Allows m
 const config = {
 	url: 'https://api.example.org',
 	beforeRequestHandlers: [
-		(url, init) => {
+		(request) => {
 			const url = import.meta.env.MODE === 'development'
-				? new URL('http://localhost:1234/api')
-				: url
-			return [url, init]
+				? 'http://localhost:1234/api'
+				: request.url
+			return new Request(url, request)
 		},
 	],
 }
@@ -221,9 +221,9 @@ Returning a result object with the corrected status and a `Response` object allo
 const config = {
 	url: 'https://api.example.org',
 	requestErrorHandlers: [
-		async (requestError, url, init) => {
+		async (requestError, request) => {
 			// Do something to fix the error cause
-			const response = await fetch(url, init)
+			const response = await fetch(request)
 
 			return { status: 'corrected', value: response }
 		},
@@ -239,7 +239,7 @@ Returning a result object with the maintained status and an `Error` object makes
 const config = {
 	url: 'https://api.example.org',
 	requestErrorHandlers: [
-		(requestError, url, init) => {
+		(requestError, request) => {
 			// Do something with requestError
 			requestError.message = 'ERR: ' + requestError.message
 
@@ -261,7 +261,7 @@ Exceptions during the processing of a response success handler are not caught.
 const config = {
 	url: 'https://api.example.org',
 	responseSuccessHandlers: [
-		async (retrieveResponse, url, init) => {
+		async (retrieveResponse) => {
 			// Do something with retrieveResponse
 			return retrieveResponse
 		},
@@ -288,10 +288,10 @@ Returning a result object with the corrected status and a `Response` object allo
 const config = {
 	url: 'https://api.example.org',
 	responseErrorHandlers: [
-		async (error, retrieveResponse, url, init) => {
+		async (error, retrieveResponse) => {
 			if (retrieveResponse.response.status === 401) {
 				// Do something to fix the error cause (e.g. refresh the user's session)
-				const response = await fetch(url, init)
+				const response = await fetch(retrieveResponse.request)
 
 				return { status: 'corrected', value: response }
 			}
@@ -310,7 +310,7 @@ Returning a result object with the maintained status and an `ResponseError` obje
 const config = {
 	url: 'https://api.example.org',
 	responseErrorHandlers: [
-		async (error, retrieveResponse, url, init) => {
+		async (error, retrieveResponse) => {
 			// Do something with error
 			error.message = 'ERR: ' + error.message
 
@@ -391,10 +391,12 @@ async function example() {
 	await retrieve({
 		url: 'http://api.example.org/status',
 		responseErrorHandlers: [
-			async (error, retrieveResponse, url, init) => {
-				if (retrieveResponse.response.status === 401) {
+			async (error, { request, response }) => {
+				if (response.status === 401) {
 					// Do something to fix the error cause (e.g. refresh the user's session)
-					const response = await fetch(url, init)
+					const newAccessToken = '...'
+					request.headers.set('Authorization', `Bearer ${newAccessToken}`)
+					const response = await fetch(request)
 
 					return { status: 'corrected', value: response }
 				}
@@ -515,7 +517,8 @@ async function example() {
 		await retrieve({
 			url: 'http://api.example.org/status',
 			responseErrorHandlers: [
-				async (error, { data }) => {
+				async (error, retrieveResponse) => {
+					const { data } = retrieveResponse
 					let message = error.message
 					let code = null
 

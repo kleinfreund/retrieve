@@ -86,11 +86,11 @@ export interface RetrieveConfig {
 	 * const config = {
 	 *   url: 'https://api.example.org',
 	 *   beforeRequestHandlers: [
-	 *     (url, init) => {
+	 *     (request) => {
 	 *       const url = import.meta.env.MODE === 'development'
-	 *         ? new URL('http://localhost:1234/api')
-	 *         : url
-	 *       return [url, init]
+	 *         ? 'http://localhost:1234/api'
+	 *         : request.url
+	 *       return new Request(url, request)
 	 *     },
 	 *   ],
 	 * }
@@ -116,11 +116,11 @@ export interface RetrieveConfig {
 	 * const config = {
 	 *   url: 'https://api.example.org',
 	 *   requestErrorHandlers: [
-	 *     async (requestError, url, init) => {
+	 *     async (requestError, request) => {
 	 *       // Do something to fix the error cause
-	 *       const response = await fetch(url, init)
+	 *       const response = await fetch(request)
 	 *
-	 *         return { status: 'corrected', value: response }
+	 *       return { status: 'corrected', value: response }
 	 *     },
 	 *   ],
 	 * }
@@ -134,7 +134,7 @@ export interface RetrieveConfig {
 	 * const config = {
 	 *   url: 'https://api.example.org',
 	 *   requestErrorHandlers: [
-	 *     (requestError, url, init) => {
+	 *     (requestError, request) => {
 	 *       // Do something with requestError
 	 *       requestError.message = 'ERR: ' + requestError.message
 	 *
@@ -157,7 +157,7 @@ export interface RetrieveConfig {
 	 * const config = {
 	 *   url: 'https://api.example.org',
 	 *   responseSuccessHandlers: [
-	 *     async (retrieveResponse, url, init) => {
+	 *     async (retrieveResponse) => {
 	 *       // Do something with retrieveResponse
 	 *       return retrieveResponse
 	 *     },
@@ -185,10 +185,10 @@ export interface RetrieveConfig {
 	 * const config = {
 	 *   url: 'https://api.example.org',
 	 *   responseErrorHandlers: [
-	 *     async (error, retrieveResponse, url, init) => {
+	 *     async (error, retrieveResponse) => {
 	 *       if (retrieveResponse.response.status === 401) {
 	 *         // Do something to fix the error cause (e.g. refresh the user's session)
-	 *         const response = await fetch(url, init)
+	 *         const response = await fetch(retrieveResponse.request)
 	 *
 	 *         return { status: 'corrected', value: response }
 	 *       }
@@ -207,7 +207,7 @@ export interface RetrieveConfig {
 	 * const config = {
 	 *   url: 'https://api.example.org',
 	 *   responseErrorHandlers: [
-	 *     async (error, retrieveResponse, url, init) => {
+	 *     async (error, retrieveResponse) => {
 	 *       // Do something with error
 	 *       error.message = 'ERR: ' + error.message
 	 *
@@ -254,15 +254,13 @@ export interface ErrorMaintainedResult<ErrorType> {
 
 export type ErrorHandlerResult<ErrorType = Error> = ErrorCorrectedResult | ErrorMaintainedResult<ErrorType>
 
-export type RetrieveFetchParams = [RetrieveConfig['url'], RequestInit]
+export type BeforeRequestHandler = (request: Request) => Request | Promise<Request>
 
-export type BeforeRequestHandler = (...fetchParams: RetrieveFetchParams) => RetrieveFetchParams | Promise<RetrieveFetchParams>
-
-export type RequestErrorHandler = (requestError: Error, ...fetchParams: RetrieveFetchParams) => ErrorHandlerResult | Promise<ErrorHandlerResult>
+export type RequestErrorHandler = (requestError: Error, request: Request) => ErrorHandlerResult | Promise<ErrorHandlerResult>
 
 export type ResponseSuccessHandler = (retrieveResponse: RetrieveResponse) => RetrieveResponse | Promise<RetrieveResponse>
 
-export type ResponseErrorHandler = (error: Error, retrieveResponse: RetrieveResponse, ...fetchParams: RetrieveFetchParams) => ErrorHandlerResult<Error> | Promise<ErrorHandlerResult<Error>>
+export type ResponseErrorHandler = (error: Error, retrieveResponse: RetrieveResponse) => ErrorHandlerResult<Error> | Promise<ErrorHandlerResult<Error>>
 
 type BodyType = 'arrayBuffer' | 'blob' | 'formData' | 'json' | 'text'
 
@@ -285,12 +283,11 @@ export async function retrieve (config: RetrieveConfig): Promise<RetrieveRespons
 	const url = createUrl(config)
 	const init = createInit(config)
 
-	let fetchParams: RetrieveFetchParams = [url, init]
+	let request = new Request(url, init)
 	for (const beforeRequestHandler of config.beforeRequestHandlers ?? []) {
-		fetchParams = await beforeRequestHandler(...fetchParams)
+		request = await beforeRequestHandler(request)
 	}
 
-	const request = new Request(...fetchParams)
 	let response: Response | undefined
 
 	try {
@@ -299,7 +296,7 @@ export async function retrieve (config: RetrieveConfig): Promise<RetrieveRespons
 		let requestError = createRequestError(error, config.requestErrorMessage)
 
 		for (const requestErrorHandler of config.requestErrorHandlers ?? []) {
-			const result = await requestErrorHandler(requestError, ...fetchParams)
+			const result = await requestErrorHandler(requestError, request)
 			if (result.status === 'corrected') {
 				response = result.value
 				// At this point, the current request error handler has corrected the error state (by returning a new `Response` object) and we stop processing any further request error handlers.
@@ -329,7 +326,7 @@ export async function retrieve (config: RetrieveConfig): Promise<RetrieveRespons
 	let error: Error = new ResponseError(retrieveResponse, config.responseErrorMessage)
 
 	for (const responseErrorHandler of config.responseErrorHandlers ?? []) {
-		const result = await responseErrorHandler(error, retrieveResponse, ...fetchParams)
+		const result = await responseErrorHandler(error, retrieveResponse)
 
 		if (result.status === 'corrected') {
 			retrieveResponse = await createRetrieveResponse(request, result.value)
@@ -355,7 +352,7 @@ function createUrl (config: RetrieveConfig): URL {
 	const baseUrl = config.baseUrl ?? (typeof window !== 'undefined' ? window.location.origin : undefined)
 	const url = new URL(config.url, baseUrl)
 
-	// Turns `params` into query parameters for GET requests
+	// Turn `params` into query parameters for GET requests
 	if (config.params) {
 		const params = config.params instanceof URLSearchParams
 			? config.params

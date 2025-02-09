@@ -6,7 +6,6 @@ export type {
 	ResponseErrorHandler,
 	ResponseSuccessHandler,
 	RetrieveConfig,
-	RetrieveFetchParams,
 	RetrieveResponse,
 } from './retrieve.js'
 

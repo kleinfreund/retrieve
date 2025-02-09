@@ -905,10 +905,8 @@ describe('retrieve', () => {
 					{
 						url: 'http://example.org/path',
 						beforeRequestHandlers: [
-							(url, init) => {
-								const newUrl = url instanceof URL ? url : new URL(url)
-								newUrl.href += '-x'
-								return [newUrl, init]
+							(request) => {
+								return new Request(request.url + '-x', request)
 							},
 						],
 					},
@@ -924,7 +922,9 @@ describe('retrieve', () => {
 					{
 						url: 'http://example.org/path',
 						beforeRequestHandlers: [
-							(url, init) => [url, { ...init, method: 'PATCH' }],
+							(request) => {
+								return new Request(request, { method: 'PATCH' })
+							},
 						],
 					},
 					new URL('http://example.org/path'),
