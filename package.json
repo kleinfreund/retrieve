@@ -10,7 +10,7 @@
 	"homepage": "https://retrieve.netlify.app",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/kleinfreund/retrieve.git"
+		"url": "git+https://github.com/kleinfreund/retrieve.git"
 	},
 	"bugs": {
 		"url": "https://github.com/kleinfreund/retrieve/issues"
