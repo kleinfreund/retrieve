@@ -1,4 +1,5 @@
 import { ResponseError } from './ResponseError.js'
+import { RetrieveResponse } from './RetrieveResponse.js'
 
 export interface RetrieveConfig {
 	/**
@@ -48,7 +49,7 @@ export interface RetrieveConfig {
 	 * If `config.data` is set:
 	 *
 	 * - … and the “content-type” header is “application/json”, `init.body` is set to the result of `JSON.stringify(config.data)`
-	 * - … otherwise, `init.body` is set to `config.data`. It's your responsibility to make sure `config.data` can used on `init.body` (see [fetch() global function: parameters](https://developer.mozilla.org/en-US/docs/Web/API/fetch#parameters)).
+	 * - … otherwise, `init.body` is set to `config.data`. It's your responsibility to make sure `config.data` can be used on `init.body` (see [fetch() global function: parameters](https://developer.mozilla.org/en-US/docs/Web/API/fetch#parameters)).
 	 */
 	// Allowing `any` for this because I feel like I'd do more harm trying to type-guard against all the possible values that you can feed to `JSON.stringify` (which are a lot) than just letting the consumers of `retrieve` figure this out. Sorry. 🤡
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -78,7 +79,16 @@ export interface RetrieveConfig {
 	timeout?: number
 
 	/**
-	 * Processed right before a request is sent (i.e. before calling `fetch`). Allows making changes to the parameters passed to `fetch` after they've been processed by `retrieve`.
+	 * Run right before a request is sent (i.e. before calling `fetch`). Allows making changes to the parameters passed to `fetch` after they've been processed by `retrieve`. Also allows skipping the call to `fetch` entirely.
+	 *
+	 * Exceptions during the processing of a before request handler are not caught.
+	 *
+	 * A before request handler can have one of two results:
+	 *
+	 * - proceeding with the execution of `retrieve` like normal
+	 * - altering the normal execution of `retrieve` to avoid making the call to `fetch` entirely (indicated by returning a `Response` object)
+	 *
+	 * When returning a `Response` object in a before request handler, the call to `fetch` is skipped entirely and the subsequent execution of `retrieve` uses the `Response` object for all further logic.
 	 *
 	 * **Example**:
 	 *
@@ -87,10 +97,7 @@ export interface RetrieveConfig {
 	 *   url: 'https://api.example.org',
 	 *   beforeRequestHandlers: [
 	 *     (request) => {
-	 *       const url = import.meta.env.MODE === 'development'
-	 *         ? 'http://localhost:1234/api'
-	 *         : request.url
-	 *       return new Request(url, request)
+	 *       request.headers.set('Authorization', 'Bearer ...')
 	 *     },
 	 *   ],
 	 * }
@@ -99,120 +106,13 @@ export interface RetrieveConfig {
 	beforeRequestHandlers?: BeforeRequestHandler[]
 
 	/**
-	 * Processed if sending the request failed (i.e. the promise returned by `fetch` was rejected). Allows implementing corrective measures.
+	 * Run when sending the request failed (i.e. the promise returned by `fetch` was rejected). Allows implementing corrective measures.
 	 *
 	 * Exceptions during the processing of a request error handler are not caught.
 	 *
 	 * A request error handler can have one of two results:
 	 *
-import { ResponseError } from './ResponseError.js'
-
-export interface RetrieveConfig {
-	/**
-	 * Request URL.
-	 *
-	 * - `URL`: Will be used as-is.
-	 * - `string`:
-	 *   - Absolute URL string: Will be used as-is.
-	 *   - Relative URL path string: Will be turned into an absolute URL (using `config.baseUrl`).
-	 */
-	url: string | URL
-
-	/**
-	 * Base for request URL. Ignored if `url` is a URL object or an absolute URL string.
-	 *
-	 * **Default**: `window.location.origin` in browser environments; otherwise, `undefined`
-	 */
-	baseUrl?: string | URL
-
-	/**
-	 * Request query parameters. Will be appended to the request URL. Parameters already existing on the request URL will be overridden. New parameters will be added.
-	 *
-	 * `FormData` is intentionally not supported because it cannot be easily and reliably turned into an `URLSearchParams` object. If you can guarantee that your `FormData` object doesn't hold files, you can provide `config.params` using `new URLSearchParams(formData)`.
-	 */
-	params?: Record<string, string> | URLSearchParams
-
-	/**
-	 * Init object passed to `fetch`.
-	 *
-	 * The following changes are made to the `init` object before it is passed to `fetch` (but without changing `config.init`):
-	 *
-	 * - **Headers**: If no “content-type” header is set, it is determined automatically where appropriate:
-	 *
-	 *   - “application/octet-stream” if `config.data` is an `ArrayBuffer` of `Blob` object
-	 *   - “plain/text” if `config.data` is a string
-	 *   - “application/json” if `config.data` is set and the request method isn't GET or HEAD
-	 *
-	 *   Note that if `config.data` is set to a `FormData` object, an existing content type **will be removed**. Read the warning on [MDN: Using FormData Objects: Sending files using a FormData object](https://developer.mozilla.org/en-US/docs/Web/API/FormData/Using_FormData_Objects#sending_files_using_a_formdata_object) for an explanation.
-	 * - **Body**: If `config.data` is set, it will be used for `init.body`. See `config.data` description for more information. Otherwise, if `config.init.body` is set, it will be used for fetch's `init.body`.
-	 * - **Signal**: If `config.timeout` is set to a positive number, it will be used to create `init.signal` using `AbortSignal.timeout(config.timeout)`.
-	 */
-	init?: RequestInit
-
-	/**
-	 * Request body data.
-	 *
-	 * If `config.data` is set:
-	 *
-	 * - … and the “content-type” header is “application/json”, `init.body` is set to the result of `JSON.stringify(config.data)`
-	 * - … otherwise, `init.body` is set to `config.data`. It's your responsibility to make sure `config.data` can used on `init.body` (see [fetch() global function: parameters](https://developer.mozilla.org/en-US/docs/Web/API/fetch#parameters)).
-	 */
-	// Allowing `any` for this because I feel like I'd do more harm trying to type-guard against all the possible values that you can feed to `JSON.stringify` (which are a lot) than just letting the consumers of `retrieve` figure this out. Sorry. 🤡
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	data?: any
-
-	/**
-	 * Message for request errors.
-	 *
-	 * If set, it overrides the underlying error's own message which will then be set on the request error's `cause` property.
-	 *
-	 * **Default**: `'Unknown request error'`
-	 */
-	requestErrorMessage?: string
-
-	/**
-	 * Message for response errors.
-	 *
-	 * **Default**: `$statusCode $statusText` (e.g. `'404 Not Found'`)
-	 */
-	responseErrorMessage?: string
-
-	/**
-	 * Request timeout in milliseconds.
-	 *
-	 * **Default**: `0` (no timeout)
-	 */
-	timeout?: number
-
-	/**
-	 * Processed right before a request is sent (i.e. before calling `fetch`). Allows making changes to the parameters passed to `fetch` after they've been processed by `retrieve`.
-	 *
-	 * **Example**:
-	 *
-	 * ```js
-	 * const config = {
-	 *   url: 'https://api.example.org',
-	 *   beforeRequestHandlers: [
-	 *     (request) => {
-	 *       const url = import.meta.env.MODE === 'development'
-	 *         ? 'http://localhost:1234/api'
-	 *         : request.url
-	 *       return new Request(url, request)
-	 *     },
-	 *   ],
-	 * }
-	 * ```
-	 */
-	beforeRequestHandlers?: BeforeRequestHandler[]
-
-	/**
-	 * Processed if sending the request failed (i.e. the promise returned by `fetch` was rejected). Allows implementing corrective measures.
-	 *
-	 * Exceptions during the processing of a request error handler are not caught.
-	 *
-	 * A request error handler can have one of two results:
-	 *
-	 * - maintaining the error state of the request (indicated by returning an `Error` object)
+	 * - maintaining the error state of the request
 	 * - correcting the error state of the request (indicated by returning a `Response` object)
 	 *
 	 * Returning a `Response` object allows `retrieve` to continue processing the request as if no error occurred in the first place. Then, no further error request handlers will be processed.
@@ -225,13 +125,13 @@ export interface RetrieveConfig {
 	 *   requestErrorHandlers: [
 	 *     async (error, request) => {
 	 *       // Do something to fix the error cause
-	 *       return await fetch(request)
+	 *       return await retrieve(request)
 	 *     },
 	 *   ],
 	 * }
 	 * ```
 	 *
-	 * Returning an `Error` object makes `retrieve` continue treating the request as having errored. Note also that all request error handlers will be processed as long as the previous handlers maintain the error state (i.e. don't return a `Response` object).
+	 * Returning an `Error` object (or not returning anything or returning `undefined`) makes `retrieve` continue treating the request as having errored. All request error handlers will be processed as long as the previous handlers maintain the error state (i.e. don't return a `Response` object). A returned `Error` object will be passed to subsequent handlers.
 	 *
 	 * **Example**:
 	 *
@@ -242,7 +142,6 @@ export interface RetrieveConfig {
 	 *     (error, request) => {
 	 *       // Do something with error
 	 *       error.message = 'ERR: ' + error.message
-	 *
 	 *       return error
 	 *     },
 	 *   ],
@@ -252,7 +151,7 @@ export interface RetrieveConfig {
 	requestErrorHandlers?: RequestErrorHandler[]
 
 	/**
-	 * Processed if sending the request succeeded and a response with a status code 200–299 was returned (i.e. the promise returned by `fetch` is fulfilled and yields a `Response` object whose `ok` property is set to `true`).
+	 * Run when sending the request succeeded and a response with a status code 200–299 was returned (i.e. the promise returned by `fetch` is fulfilled and yields a `Response` object whose `ok` property is set to `true`).
 	 *
 	 * Exceptions during the processing of a response success handler are not caught.
 	 *
@@ -273,13 +172,13 @@ export interface RetrieveConfig {
 	responseSuccessHandlers?: ResponseSuccessHandler[]
 
 	/**
-	 * Processed if sending the request succeeded and a response with a status code >=300 was returned (i.e. the promise returned by `fetch` is fulfilled and yields a `Response` object whose `ok` property is set to `false`).
+	 * Run when sending the request succeeded and a response with a status code >=300 was returned (i.e. the promise returned by `fetch` is fulfilled and yields a `Response` object whose `ok` property is set to `false`).
 	 *
 	 * Exceptions during the processing of a response error handler are not caught.
 	 *
 	 * A response error handler can have one of two results:
 	 *
-	 * - maintaining the error state of the response (indicated by returning an `Error` object)
+	 * - maintaining the error state of the response
 	 * - correcting the error state of the response (indicated by returning a `Response` object)
 	 *
 	 * Returning a `Response` object allows `retrieve` to continue processing the response as if no error occurred in the first place. Then, no further error response handlers will be processed.
@@ -290,19 +189,17 @@ export interface RetrieveConfig {
 	 * const config = {
 	 *   url: 'https://api.example.org',
 	 *   responseErrorHandlers: [
-	 *     async (error, retrieveResponse) => {
-	 *       if (retrieveResponse.response.status === 401) {
+	 *     async (error, { request, response }) => {
+	 *       if (response.status === 401) {
 	 *         // Do something to fix the error cause (e.g. refresh the user's session)
-	 *         return await fetch(retrieveResponse.request)
+	 *         return await retrieve(request)
 	 *       }
-	 *
-	 *       return error
 	 *     },
 	 *   ],
 	 * }
 	 * ```
 	 *
-	 * Returning an `Error` object makes `retrieve` continue treating the response as having errored. Note also that all response error handlers will be processed as long as the previous handlers maintain the error state (i.e. don't return a `Response` object).
+	 * Returning an `Error` object (or not returning anything or returning `undefined`) makes `retrieve` continue treating the response as having errored. All response error handlers will be processed as long as the previous handlers maintain the error state (i.e. don't return a `Response` object). A returned `Error` object will be passed to subsequent handlers.
 	 *
 	 * **Example**:
 	 *
@@ -313,7 +210,6 @@ export interface RetrieveConfig {
 	 *     async (error, retrieveResponse) => {
 	 *       // Do something with error
 	 *       error.message = 'ERR: ' + error.message
-	 *
 	 *       return error
 	 *     },
 	 *   ],
@@ -323,37 +219,15 @@ export interface RetrieveConfig {
 	responseErrorHandlers?: ResponseErrorHandler[]
 }
 
-export interface RetrieveResponse {
-	/**
-	 * Original `Request` object passed to `fetch`.
-	 */
-	request: Request
+type OptionalPromise<T> = T | Promise<T>
 
-	/**
-	 * Original `Response` object as returned by `fetch`.
-	 */
-	response: Response
+export type BeforeRequestHandler = (request: Request) => OptionalPromise<Response | Request | undefined>
 
-	/**
-	 * Deserialized response body (if applicable).
-	 *
-	 * The following logic applies to deserialization:
-	 *
-	 * - Response content type starts with “application/json” or “application/problem+json”: the response body is parsed as JSON (using `Response.prototype.json`).
-	 * - For everything else: the response body is parsed as text (using `Response.prototype.text`).
-	 */
-	data: unknown
-}
+export type RequestErrorHandler = (error: Error, request: Request) => OptionalPromise<Response | Error | undefined>
 
-export type ErrorHandlerResult = Response | Error
+export type ResponseSuccessHandler = (retrieveResponse: RetrieveResponse) => OptionalPromise<RetrieveResponse | undefined>
 
-export type BeforeRequestHandler = (request: Request) => Request | Promise<Request>
-
-export type RequestErrorHandler = (error: Error, request: Request) => ErrorHandlerResult | Promise<ErrorHandlerResult>
-
-export type ResponseSuccessHandler = (retrieveResponse: RetrieveResponse) => RetrieveResponse | Promise<RetrieveResponse>
-
-export type ResponseErrorHandler = (error: Error, retrieveResponse: RetrieveResponse) => ErrorHandlerResult | Promise<ErrorHandlerResult>
+export type ResponseErrorHandler = (error: Error, retrieveResponse: RetrieveResponse) => OptionalPromise<RetrieveResponse | Response | Error | undefined>
 
 type BodyType = 'arrayBuffer' | 'blob' | 'formData' | 'json' | 'text'
 
@@ -377,14 +251,23 @@ export async function retrieve (config: RetrieveConfig): Promise<RetrieveRespons
 	const init = createInit(config)
 
 	let request = new Request(url, init)
-	for (const beforeRequestHandler of config.beforeRequestHandlers ?? []) {
-		request = await beforeRequestHandler(request)
-	}
-
 	let response: Response | undefined
 
+	for (const beforeRequestHandler of config.beforeRequestHandlers ?? []) {
+		const result = await beforeRequestHandler(request)
+		if (result instanceof Response) {
+			response = result
+			// At this point, the current before request handler has corrected the error state (by returning a new `Response` object) and no further before request handlers are processed. Notably, the call to `fetch` will be skipped entirely.
+			break
+		} else {
+			request = result !== undefined ? result : request
+		}
+	}
+
 	try {
-		response = await fetch(request)
+		if (!(response instanceof Response)) {
+			response = await fetch(request)
+		}
 	} catch (error) {
 		let requestError = createRequestError(error, config.requestErrorMessage)
 
@@ -392,15 +275,15 @@ export async function retrieve (config: RetrieveConfig): Promise<RetrieveRespons
 			const result = await requestErrorHandler(requestError, request)
 			if (result instanceof Response) {
 				response = result
-				// At this point, the current request error handler has corrected the error state (by returning a new `Response` object) and we stop processing any further request error handlers.
+				// At this point, the current request error handler has corrected the error state (by returning a new `Response` object) and no further request error handlers are processed.
 				break
 			} else {
-				requestError = result
+				requestError = result !== undefined ? result : requestError
 			}
 		}
 
 		// If `response` isn't set here, the request error wasn't corrected and we can throw it.
-		if (!response) {
+		if (response === undefined) {
 			throw requestError
 		}
 		// Conversely, `response` being set here is the signal for the request error to have been corrected by a request error handler and for retrieve to move on to processing the response as if no request error had occurred in the first place.
@@ -410,7 +293,8 @@ export async function retrieve (config: RetrieveConfig): Promise<RetrieveRespons
 
 	if (retrieveResponse.response.ok) {
 		for (const responseSuccessHandler of config.responseSuccessHandlers ?? []) {
-			retrieveResponse = await responseSuccessHandler(retrieveResponse)
+			const result = await responseSuccessHandler(retrieveResponse)
+			retrieveResponse = result !== undefined ? result : retrieveResponse
 		}
 
 		return retrieveResponse
@@ -421,12 +305,16 @@ export async function retrieve (config: RetrieveConfig): Promise<RetrieveRespons
 	for (const responseErrorHandler of config.responseErrorHandlers ?? []) {
 		const result = await responseErrorHandler(error, retrieveResponse)
 
-		if (result instanceof Response) {
+		if (result instanceof RetrieveResponse) {
+			retrieveResponse = result
+			// At this point, the current response error handler has corrected the error state (by returning a `Response` object) and no further response error handlers are processed.
+			break
+		} else if (result instanceof Response) {
 			retrieveResponse = await createRetrieveResponse(request, result)
 			// At this point, the current response error handler has corrected the error state (by returning a `Response` object) and no further response error handlers are processed.
 			break
 		} else {
-			error = result
+			error = result !== undefined ? result : error
 		}
 	}
 
@@ -441,3 +329,131 @@ export async function retrieve (config: RetrieveConfig): Promise<RetrieveRespons
  * Creates a `URL` object that will be passed to `fetch` as its `input` parameter.
  */
 function createUrl (config: RetrieveConfig): URL {
+	// Process request URL
+	const baseUrl = config.baseUrl ?? (typeof window !== 'undefined' ? window.location.origin : undefined)
+	const url = new URL(config.url, baseUrl)
+
+	// Turn `params` into query parameters for GET requests
+	if (config.params) {
+		const params = config.params instanceof URLSearchParams
+			? config.params
+			: new URLSearchParams(config.params)
+
+		for (const [param, value] of params) {
+			url.searchParams.set(param, value)
+		}
+	}
+
+	return url
+}
+
+/**
+ * Creates an `RequestInit` object that will be passed to `fetch` as its `init` parameter.
+ */
+function createInit (config: RetrieveConfig): RequestInit {
+	const originalInit = config.init ?? {}
+	const init: RequestInit = { ...originalInit }
+
+	// Process request method
+	init.method = (originalInit.method ?? 'GET').toUpperCase()
+
+	// Process request headers
+	init.headers = new Headers(originalInit.headers)
+
+	if (!init.headers.has('x-request-with')) {
+		init.headers.set('x-requested-with', 'XMLHttpRequest')
+	}
+
+	// Determines request body type
+	let bodyType: BodyType | undefined
+
+	if ('data' in config) {
+		const contentType = init.headers.get(CONTENT_TYPE)
+
+		if (config.data instanceof ArrayBuffer) {
+			bodyType = 'arrayBuffer'
+		} else if (config.data instanceof Blob) {
+			bodyType = 'blob'
+		} else if (config.data instanceof FormData) {
+			bodyType = 'formData'
+		} else if (contentType?.startsWith(CONTENT_TYPE_JSON) || (contentType === null && !['GET', 'HEAD'].includes(init.method))) {
+			bodyType = 'json'
+		} else if (typeof config.data === 'string') {
+			bodyType = 'text'
+		}
+	}
+
+	if (bodyType === 'formData') {
+		/**
+		 * The content type shouldn't be explicitly set for requests with a `FormData` body because the browser will otherwise not add the form data boundary to the content type header (e.g. “multipart/form-data; boundary=...”),
+		 *
+		 * Source: https://developer.mozilla.org/en-US/docs/Web/API/FormData/Using_FormData_Objects#sending_files_using_a_formdata_object
+		 */
+		init.headers.delete(CONTENT_TYPE)
+	} else if (bodyType && !init.headers.has(CONTENT_TYPE)) {
+		// Sets the content type if not already set explicitly.
+		init.headers.set(CONTENT_TYPE, CONTENT_TYPES[bodyType])
+	}
+
+	// Process request body
+	if ('data' in config) {
+		init.body = bodyType === 'json' ? JSON.stringify(config.data) : config.data
+	} else if ('body' in originalInit) {
+		init.body = originalInit.body
+	}
+
+	if (config.timeout && !('signal' in init)) {
+		init.signal = AbortSignal.timeout(config.timeout)
+	}
+
+	return init
+}
+
+function createRequestError (error: unknown, requestErrorMessage?: string): Error {
+	const requestError = error instanceof Error ? error : new Error()
+
+	if (requestError.message) {
+		requestError.cause = requestError.message
+	}
+
+	// Overrides error message only if one is explicitly provided.
+	if (requestErrorMessage) {
+		requestError.message = requestErrorMessage
+	} else if (typeof error === 'string' && error !== '') {
+		requestError.message = error
+	} else if (!requestError.message) {
+		requestError.message = 'Unknown request error'
+	}
+
+	return requestError
+}
+
+/**
+ * Takes a `Response` object and deserializes its body (if set)
+ */
+async function createRetrieveResponse (request: Request, response: Response) {
+	const contentType = response.headers.get(CONTENT_TYPE) ?? ''
+	let bodyType: BodyType | undefined
+
+	if (contentType.startsWith(CONTENT_TYPE_JSON) || contentType.startsWith(CONTENT_TYPE_JSON_PROBLEM)) {
+		bodyType = 'json'
+	} else if (contentType.startsWith(CONTENT_TYPE_FORM_DATA)) {
+		bodyType = 'formData'
+	} else if (contentType.startsWith(CONTENT_TYPE_TEXT)) {
+		bodyType = 'text'
+	}
+
+	try {
+		const data = bodyType ? await response[bodyType]() : null
+
+		return new RetrieveResponse({ request, response, data })
+	} catch (err) {
+		const error = err as Error
+		const errorOptions: ErrorOptions = {}
+		if ('cause' in error) {
+			errorOptions.cause = error.cause
+		}
+
+		throw new ResponseError({ request, response, data: null }, error.message, errorOptions)
+	}
+}

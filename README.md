@@ -184,7 +184,16 @@ Request timeout in milliseconds.
 
 ##### `beforeRequestHandlers` (optional)
 
-Processed right before a request is sent (i.e. before calling `fetch`). Allows making changes to the parameters passed to `fetch` after they've been processed by `retrieve`.
+Run right before a request is sent (i.e. before calling `fetch`). Allows making changes to the parameters passed to `fetch` after they've been processed by `retrieve`. Also allows skipping the call to `fetch` entirely.
+
+Exceptions during the processing of a before request handler are not caught.
+
+A before request handler can have one of two results:
+
+- proceeding with the execution of `retrieve` like normal
+- altering the normal execution of `retrieve` to avoid making the call to `fetch` entirely (indicated by returning a `Response` object)
+
+When returning a `Response` object in a before request handler, the call to `fetch` is skipped entirely and the subsequent execution of `retrieve` uses the `Response` object for all further logic.
 
 **Example**:
 
@@ -193,10 +202,7 @@ const config = {
 	url: 'https://api.example.org',
 	beforeRequestHandlers: [
 		(request) => {
-			const url = import.meta.env.MODE === 'development'
-				? 'http://localhost:1234/api'
-				: request.url
-			return new Request(url, request)
+			request.headers.set('Authorization', 'Bearer ...')
 		},
 	],
 }
@@ -204,13 +210,13 @@ const config = {
 
 ##### `requestErrorHandlers` (optional)
 
-Processed if sending the request failed (i.e. the promise returned by `fetch` was rejected). Allows implementing corrective measures.
+Run when sending the request failed (i.e. the promise returned by `fetch` was rejected). Allows implementing corrective measures.
 
 Exceptions during the processing of a request error handler are not caught.
 
 A request error handler can have one of two results:
 
-- maintaining the error state of the request (indicated by returning an `Error` object)
+- maintaining the error state of the request
 - correcting the error state of the request (indicated by returning a `Response` object)
 
 Returning a `Response` object allows `retrieve` to continue processing the request as if no error occurred in the first place. Then, no further error request handlers will be processed.
@@ -229,7 +235,7 @@ const config = {
 }
 ```
 
-Returning an `Error` object makes `retrieve` continue treating the request as having errored. Note also that all request error handlers will be processed as long as the previous handlers maintain the error state (i.e. don't return a `Response` object).
+Returning an `Error` object (or not returning anything or returning `undefined`) makes `retrieve` continue treating the request as having errored. All request error handlers will be processed as long as the previous handlers maintain the error state (i.e. don't return a `Response` object). A returned `Error` object will be passed to subsequent handlers.
 
 **Example**:
 
@@ -240,7 +246,6 @@ const config = {
 		(error, request) => {
 			// Do something with error
 			error.message = 'ERR: ' + error.message
-
 			return error
 		},
 	],
@@ -249,7 +254,7 @@ const config = {
 
 ##### `responseSuccessHandlers` (optional)
 
-Processed if sending the request succeeded and a response with a status code 200–299 was returned (i.e. the promise returned by `fetch` is fulfilled and yields a `Response` object whose `ok` property is set to `true`).
+Run when sending the request succeeded and a response with a status code 200–299 was returned (i.e. the promise returned by `fetch` is fulfilled and yields a `Response` object whose `ok` property is set to `true`).
 
 Exceptions during the processing of a response success handler are not caught.
 
@@ -261,7 +266,6 @@ const config = {
 	responseSuccessHandlers: [
 		async (retrieveResponse) => {
 			// Do something with retrieveResponse
-			return retrieveResponse
 		},
 	],
 }
@@ -269,13 +273,13 @@ const config = {
 
 ##### `responseErrorHandlers` (optional)
 
-Processed if sending the request succeeded and a response with a status code >=300 was returned (i.e. the promise returned by `fetch` is fulfilled and yields a `Response` object whose `ok` property is set to `false`).
+Run when sending the request succeeded and a response with a status code >=300 was returned (i.e. the promise returned by `fetch` is fulfilled and yields a `Response` object whose `ok` property is set to `false`).
 
 Exceptions during the processing of a response error handler are not caught.
 
 A response error handler can have one of two results:
 
-- maintaining the error state of the response (indicated by returning an `Error` object)
+- maintaining the error state of the response
 - correcting the error state of the response (indicated by returning a `Response` object)
 
 Returning a `Response` object allows `retrieve` to continue processing the response as if no error occurred in the first place. Then, no further error response handlers will be processed.
@@ -286,13 +290,14 @@ Returning a `Response` object allows `retrieve` to continue processing the respo
 const config = {
 	url: 'https://api.example.org',
 	responseErrorHandlers: [
-		async (error, retrieveResponse) => {
-			if (retrieveResponse.response.status === 401) {
+		async (error, { request, response }) => {
+			if (response.status === 401) {
 				// Do something to fix the error cause (e.g. refresh the user's session)
-				return await fetch(retrieveResponse.request)
-			}
+				const newAccessToken = '...'
+				request.headers.set('Authorization', `Bearer ${newAccessToken}`)
 
-			return error
+				return await retrieve(request)
+			}
 		},
 	],
 }
@@ -397,10 +402,8 @@ async function example() {
 					const newAccessToken = '...'
 					request.headers.set('Authorization', `Bearer ${newAccessToken}`)
 
-					return await fetch(request)
+					return await retrieve(request)
 				}
-
-				return error
 			},
 		],
 	})
@@ -516,8 +519,7 @@ async function example() {
 		await retrieve({
 			url: 'http://api.example.org/status',
 			responseErrorHandlers: [
-				async (error, retrieveResponse) => {
-					const { data } = retrieveResponse
+				(error, { data }) => {
 					let message = error.message
 					let code = null
 
