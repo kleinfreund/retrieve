@@ -46,6 +46,7 @@
 		"lint:code": "eslint",
 		"lint:lockfile": "lockfile-lint --path package-lock.json --validate-hosts --allowed-hosts npm",
 		"lint:package": "publint",
+		"lint:types": "tsc --noEmit",
 		"fix": "run-p fix:*",
 		"fix:code": "npm run lint:code -- --fix",
 		"release": "semantic-release",
