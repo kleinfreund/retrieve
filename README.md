@@ -210,10 +210,10 @@ Exceptions during the processing of a request error handler are not caught.
 
 A request error handler can have one of two results:
 
-- maintaining the error state of the request (indicated by returning `{ status: 'maintained', value: error }`)
-- correcting the error state of the request (indicated by returning `{ status: 'corrected', value: response }`)
+- maintaining the error state of the request (indicated by returning an `Error` object)
+- correcting the error state of the request (indicated by returning a `Response` object)
 
-Returning a result object with the corrected status and a `Response` object allows `retrieve` to continue processing the request as if no error occurred in the first place. Then, no further error request handlers will be processed.
+Returning a `Response` object allows `retrieve` to continue processing the request as if no error occurred in the first place. Then, no further error request handlers will be processed.
 
 **Example**:
 
@@ -221,17 +221,15 @@ Returning a result object with the corrected status and a `Response` object allo
 const config = {
 	url: 'https://api.example.org',
 	requestErrorHandlers: [
-		async (requestError, request) => {
+		async (error, request) => {
 			// Do something to fix the error cause
-			const response = await fetch(request)
-
-			return { status: 'corrected', value: response }
+			return await fetch(request)
 		},
 	],
 }
 ```
 
-Returning a result object with the maintained status and an `Error` object makes `retrieve` continue treating the request as having errored. Note also that all request error handlers will be processed as long as the previous handlers maintain the error state.
+Returning an `Error` object makes `retrieve` continue treating the request as having errored. Note also that all request error handlers will be processed as long as the previous handlers maintain the error state (i.e. don't return a `Response` object).
 
 **Example**:
 
@@ -239,11 +237,11 @@ Returning a result object with the maintained status and an `Error` object makes
 const config = {
 	url: 'https://api.example.org',
 	requestErrorHandlers: [
-		(requestError, request) => {
-			// Do something with requestError
-			requestError.message = 'ERR: ' + requestError.message
+		(error, request) => {
+			// Do something with error
+			error.message = 'ERR: ' + error.message
 
-			return { status: 'maintained', value: requestError }
+			return error
 		},
 	],
 }
@@ -277,10 +275,10 @@ Exceptions during the processing of a response error handler are not caught.
 
 A response error handler can have one of two results:
 
-- maintaining the error state of the response (indicated by returning `{ status: 'maintained', value: error }`)
-- correcting the error state of the response (indicated by returning `{ status: 'corrected', value: response }`)
+- maintaining the error state of the response (indicated by returning an `Error` object)
+- correcting the error state of the response (indicated by returning a `Response` object)
 
-Returning a result object with the corrected status and a `Response` object allows `retrieve` to continue processing the response as if no error occurred in the first place. Then, no further error response handlers will be processed.
+Returning a `Response` object allows `retrieve` to continue processing the response as if no error occurred in the first place. Then, no further error response handlers will be processed.
 
 **Example**:
 
@@ -291,18 +289,16 @@ const config = {
 		async (error, retrieveResponse) => {
 			if (retrieveResponse.response.status === 401) {
 				// Do something to fix the error cause (e.g. refresh the user's session)
-				const response = await fetch(retrieveResponse.request)
-
-				return { status: 'corrected', value: response }
+				return await fetch(retrieveResponse.request)
 			}
 
-			return { status: 'maintained', value: error }
+			return error
 		},
 	],
 }
 ```
 
-Returning a result object with the maintained status and an `ResponseError` object makes `retrieve` continue treating the response as having errored. Note also that all response error handlers will be processed as long as the previous handlers maintain the error state.
+Returning an `Error` object makes `retrieve` continue treating the response as having errored. Note also that all response error handlers will be processed as long as the previous handlers maintain the error state (i.e. don't return a `Response` object).
 
 **Example**:
 
@@ -314,7 +310,7 @@ const config = {
 			// Do something with error
 			error.message = 'ERR: ' + error.message
 
-			return { status: 'maintained', value: error }
+			return error
 		},
 	],
 }
@@ -334,7 +330,11 @@ A `TypeError` is thrown when `fetch` does (see [fetch() global function: Excepti
 
 A `ResponseError` is thrown for `fetch` responses with a status code >=300.
 
-By default, this error will be an instance of `ResponseError` which will have access to the original `Response` object returned by `fetch` and the deserialized `data` also found on `RetrieveResponse` objects:
+A `ResponseError` has access to:
+
+- `request`: the `Request` object used when calling `fetch`
+- `response`: the `Response` object returned by `fetch`
+- `data`: the deserialized response body contents
 
 ```js
 try {
@@ -348,7 +348,7 @@ try {
 }
 ```
 
-Note that when using response error handlers that the final error is determined by you and may or may not be a `ResponseError`.
+Note that using `config.responseErrorHandlers` might change the thrown value from a `ResponseError` object to a plain `Error` object (or technically anything returned by a response error handler that's not a `Response` object). It's up to you.
 
 ## Examples
 
@@ -396,12 +396,11 @@ async function example() {
 					// Do something to fix the error cause (e.g. refresh the user's session)
 					const newAccessToken = '...'
 					request.headers.set('Authorization', `Bearer ${newAccessToken}`)
-					const response = await fetch(request)
 
-					return { status: 'corrected', value: response }
+					return await fetch(request)
 				}
 
-				return { status: 'maintained', value: error }
+				return error
 			},
 		],
 	})
@@ -532,10 +531,7 @@ async function example() {
 						}
 					}
 
-					return {
-						status: 'maintained',
-						value: new ApiError(message, code),
-					}
+					return new ApiError(message, code)
 				},
 			],
 		})
@@ -571,7 +567,7 @@ The response body is automatically deserialized for JSON, `FormData`, or text re
 
 ### Returning a rejecting promise for error responses
 
-In case of receiving a response with a status code >=300 from the underlying `fetch` call, `retrieve` will return a rejecting promise (with a `ResponseError`). The behavior of `fetch` is to return a resolving promise (with a `Response`) instead.
+In case of receiving a response with a status code >=300 from the underlying `fetch` call, `retrieve` will return a rejecting promise (with a `ResponseError`). The behavior of `fetch` is to return a resolving promise (with a `Response` which has an `ok` property set to `false`) instead.
 
 ### Interceptors
 

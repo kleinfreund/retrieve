@@ -1,7 +1,5 @@
 export type {
 	BeforeRequestHandler,
-	ErrorCorrectedResult,
-	ErrorMaintainedResult,
 	RequestErrorHandler,
 	ResponseErrorHandler,
 	ResponseSuccessHandler,

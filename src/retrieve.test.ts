@@ -954,7 +954,7 @@ describe('retrieve', () => {
 					{
 						url: 'http://example.org',
 						requestErrorHandlers: [
-							(error) => ({ status: 'maintained', value: error }),
+							(error) => error,
 						],
 					},
 					new Error('Standard error'),
@@ -965,7 +965,7 @@ describe('retrieve', () => {
 						requestErrorHandlers: [
 							(error) => {
 								error.message = 'Overridden error'
-								return { status: 'maintained', value: error }
+								return error
 							},
 						],
 					},
@@ -996,7 +996,7 @@ describe('retrieve', () => {
 									},
 								})
 
-								return { status: 'corrected', value: response }
+								return response
 							},
 						],
 					},
@@ -1077,7 +1077,7 @@ describe('retrieve', () => {
 						responseErrorHandlers: [
 							(error) => {
 								error.message = 'Altered message'
-								return { status: 'maintained', value: error }
+								return error
 							},
 						],
 					},
@@ -1108,7 +1108,7 @@ describe('retrieve', () => {
 									},
 								})
 
-								return { status: 'corrected', value: response }
+								return response
 							},
 						],
 					},
@@ -1191,10 +1191,7 @@ describe('retrieve', () => {
 							}
 						}
 
-						return {
-							status: 'maintained',
-							value: new ApiError(message, code),
-						}
+						return new ApiError(message, code)
 					},
 				],
 			})
