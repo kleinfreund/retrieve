@@ -2,49 +2,54 @@ import { describe, expect, test } from 'vitest'
 import { ResponseError } from './ResponseError.js'
 
 describe('ResponseError', () => {
-	test.each([
-		[
-			'Error message',
-			new Request('http://example.org'),
-			new Response(),
-			{
-				name: 'ResponseError',
-				message: 'Error message',
-			},
-		],
-	])('toJSON produces expected result', (message, request, response, expectedToJsonObject) => {
-		const responseError = new ResponseError({ request, response, data: null }, message)
-
-		expect(responseError.toJSON()).toEqual(expectedToJsonObject)
-	})
-
-	test('holds reference to response object', () => {
+	test('toJSON produces expected result', () => {
 		const request = new Request('http://example.org')
 		const response = new Response()
-		const responseError = new ResponseError({ request, response, data: null }, 'Error message')
+		const data = null
+		const error = new Error('Error message')
+		const responseError = new ResponseError({ request, response, data }, error)
 
+		expect(responseError.toJSON()).toEqual({
+			name: 'ResponseError',
+			message: 'Error message',
+		})
+	})
+
+	test('holds reference to request/response/data', () => {
+		const request = new Request('http://example.org')
+		const response = new Response()
+		const data = null
+		const error = new Error('Error message')
+		const responseError = new ResponseError({ request, response, data }, error)
+
+		expect(responseError.request).toBe(request)
 		expect(responseError.response).toBe(response)
+		expect(responseError.data).toBe(data)
 	})
 
 	test.each([
 		[
 			undefined,
-			'200 OK',
+			'400 Bad Request',
 		],
 		[
-			'',
-			'200 OK',
+			new Error(),
+			'400 Bad Request',
 		],
 		[
-			'Error message',
+			new Error(''),
+			'400 Bad Request',
+		],
+		[
+			new Error('Error message'),
 			'Error message',
 		],
-	])('has the expected message', (message, expectedMessage) => {
+	])('has the expected message', (error, expectedMessage) => {
 		const responseError = new ResponseError({
 			request: new Request('http://example.org'),
-			response: new Response(undefined, { status: 200, statusText: 'OK' }),
+			response: new Response(undefined, { status: 400, statusText: 'Bad Request' }),
 			data: null,
-		}, message)
+		}, error)
 
 		expect(responseError.message).toBe(expectedMessage)
 	})

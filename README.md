@@ -37,8 +37,6 @@ Why is it called `retrieve`? I wanted to call it `makeRequest` (I like clean and
 			- [`config.params`](#configparams-optional)
 			- [`config.init`](#configinit-optional)
 			- [`config.data`](#configdata-optional)
-			- [`config.requestErrorMessage`](#configrequesterrormessage-optional)
-			- [`config.responseErrorMessage`](#configresponseerrormessage-optional)
 			- [`config.timeout`](#configtimeout-optional)
 			- [`config.beforeRequestHandlers`](#configbeforerequesthandlers-optional)
 			- [`config.requestErrorHandlers`](#configrequesterrorhandlers-optional)
@@ -166,20 +164,6 @@ If `config.data` is set:
 
 - … and the “content-type” header is “application/json”, `init.body` is set to the result of `JSON.stringify(config.data)`
 - … otherwise, `init.body` is set to `config.data`. It's your responsibility to make sure `config.data` can be used on `init.body` (see [fetch() global function: parameters](https://developer.mozilla.org/en-US/docs/Web/API/fetch#parameters)).
-
-##### `config.requestErrorMessage` (optional)
-
-**Default**: `'Unknown request error'`
-
-Message for request errors.
-
-If set, it overrides the underlying error's own message which will then be set on the request error's `cause` property.
-
-##### `config.responseErrorMessage` (optional)
-
-**Default**: `$statusCode $statusText` (e.g. `'404 Not Found'`)
-
-Message for response errors.
 
 ##### `config.timeout` (optional)
 

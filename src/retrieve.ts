@@ -56,22 +56,6 @@ export interface RetrieveConfig {
 	data?: any
 
 	/**
-	 * Message for request errors.
-	 *
-	 * If set, it overrides the underlying error's own message which will then be set on the request error's `cause` property.
-	 *
-	 * **Default**: `'Unknown request error'`
-	 */
-	requestErrorMessage?: string
-
-	/**
-	 * Message for response errors.
-	 *
-	 * **Default**: `$statusCode $statusText` (e.g. `'404 Not Found'`)
-	 */
-	responseErrorMessage?: string
-
-	/**
 	 * Request timeout in milliseconds.
 	 *
 	 * **Default**: `0` (no timeout)
@@ -295,7 +279,7 @@ export async function retrieve (configOrRequest: RetrieveConfig | Request): Prom
 			response = await fetch(request)
 		}
 	} catch (error) {
-		let requestError = createRequestError(error, config.requestErrorMessage)
+		let requestError = createRequestError(error)
 
 		for (const requestErrorHandler of requestErrorHandlers) {
 			const result = await requestErrorHandler(requestError, request, init)
@@ -326,7 +310,7 @@ export async function retrieve (configOrRequest: RetrieveConfig | Request): Prom
 		return retrieveResponse
 	}
 
-	let error: Error = new ResponseError(retrieveResponse, config.responseErrorMessage)
+	let error: Error = new ResponseError(retrieveResponse)
 
 	for (const responseErrorHandler of responseErrorHandlers) {
 		const result = await responseErrorHandler(error, retrieveResponse, init)
@@ -433,23 +417,12 @@ function createInit (config: RetrieveConfig): RequestInit {
 	return init
 }
 
-function createRequestError (error: unknown, requestErrorMessage?: string): Error {
-	const requestError = error instanceof Error ? error : new Error()
-
-	if (requestError.message) {
-		requestError.cause = requestError.message
+function createRequestError (error: unknown): Error {
+	if (error instanceof Error) {
+		return error
 	}
 
-	// Overrides error message only if one is explicitly provided.
-	if (requestErrorMessage) {
-		requestError.message = requestErrorMessage
-	} else if (typeof error === 'string' && error !== '') {
-		requestError.message = error
-	} else if (!requestError.message) {
-		requestError.message = 'Unknown request error'
-	}
-
-	return requestError
+	return new Error(typeof error === 'string' && error !== '' ? error : 'Unknown request error')
 }
 
 /**
@@ -471,13 +444,7 @@ async function createRetrieveResponse (request: Request, response: Response) {
 		const data = bodyType ? await response[bodyType]() : null
 
 		return new RetrieveResponse({ request, response, data })
-	} catch (err) {
-		const error = err as Error
-		const errorOptions: ErrorOptions = {}
-		if ('cause' in error) {
-			errorOptions.cause = error.cause
-		}
-
-		throw new ResponseError({ request, response, data: null }, error.message, errorOptions)
+	} catch (error) {
+		throw new ResponseError({ request, response, data: null }, error as Error)
 	}
 }

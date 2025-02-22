@@ -574,20 +574,11 @@ describe('retrieve', () => {
 				],
 				[
 					'Error + default message',
-					() => Promise.reject(new Error()),
+					() => Promise.reject(''),
 					{
 						url: 'http://example.org',
 					},
 					new Error('Unknown request error'),
-				],
-				[
-					'Error + custom message',
-					() => Promise.reject(new Error('Original error message')),
-					{
-						url: 'http://example.org',
-						requestErrorMessage: 'Custom error message',
-					},
-					new Error('Custom error message', { cause: 'Original error message' }),
 				],
 				[
 					'plain text + default message',
@@ -596,15 +587,6 @@ describe('retrieve', () => {
 						url: 'http://example.org',
 					},
 					new Error('Now that’s just great'),
-				],
-				[
-					'plain text + custom message',
-					() => Promise.reject('Original error message'),
-					{
-						url: 'http://example.org',
-						requestErrorMessage: 'Custom error message',
-					},
-					new Error('Custom error message', { cause: 'Original error message' }),
 				],
 			])('%s', async (_title, fetchMock, config, expectedError) => {
 				const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(fetchMock)
@@ -765,7 +747,7 @@ describe('retrieve', () => {
 				[
 					'no content-type',
 					function () {
-						const response = new Response('Oopsie!', {
+						const response = new Response(undefined, {
 							status: 400,
 							statusText: 'Bad Request',
 						})

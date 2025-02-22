@@ -6,8 +6,11 @@ export class ResponseError extends Error {
 	response: RetrieveResponse['response']
 	data: RetrieveResponse['data']
 
-	constructor (retrieveResponse: RetrieveResponse, message?: string, options?: { cause?: unknown }) {
-		super(message || `${retrieveResponse.response.status} ${retrieveResponse.response.statusText}`.trim(), options)
+	constructor (retrieveResponse: RetrieveResponse, error?: Error) {
+		super(
+			error?.message || `${retrieveResponse.response.status} ${retrieveResponse.response.statusText}`.trim(),
+			error?.cause ? { cause: error.cause } : undefined,
+		)
 
 		this.request = retrieveResponse.request
 		this.response = retrieveResponse.response
