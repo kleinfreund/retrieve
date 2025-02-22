@@ -343,14 +343,19 @@ function createUrl (config: RetrieveConfig): URL {
 	const baseUrl = config.baseUrl ?? (typeof window !== 'undefined' ? window.location.origin : undefined)
 	const url = new URL(config.url, baseUrl)
 
-	// Turn `params` into query parameters for GET requests
+	// Turn `params` into query
 	if (config.params) {
+		// Delete any existing query parameters
+		for (const name of url.searchParams.keys()) {
+			url.searchParams.delete(name)
+		}
+
 		const params = config.params instanceof URLSearchParams
 			? config.params
 			: new URLSearchParams(config.params)
 
-		for (const [param, value] of params) {
-			url.searchParams.set(param, value)
+		for (const [name, value] of params) {
+			url.searchParams.append(name, value)
 		}
 	}
 

@@ -86,29 +86,38 @@ describe('retrieve', () => {
 					new URL('http://example.org?query=value'),
 				],
 				[
-					'absolute URL as string + add/override query parameters (record)',
+					'absolute URL as string + query parameters (record)',
 					{
 						url: 'http://example.org?query=value',
 						params: {
-							query: 'overridden-value',
 							newParam: 'new-value',
 						},
 					},
-					new URL('http://example.org?query=overridden-value&newParam=new-value'),
+					new URL('http://example.org?newParam=new-value'),
 				],
 				[
-					'absolute URL as string + add/override query parameters (URLSearchParams)',
+					'absolute URL as string + query parameters (URLSearchParams)',
 					{
 						url: 'http://example.org?query=value',
 						params: new URLSearchParams({
-							query: 'overridden-value',
 							newParam: 'new-value',
 						}),
 					},
-					new URL('http://example.org?query=overridden-value&newParam=new-value'),
+					new URL('http://example.org?newParam=new-value'),
 				],
 				[
-					'relative URL path as string + path withleading slash',
+					'absolute URL as string + multiple query parameters of same name (URLSearchParams)',
+					{
+						url: 'http://example.org?query=url-value',
+						params: new URLSearchParams([
+							['query', 'first-value'],
+							['query', 'second-value'],
+						]),
+					},
+					new URL('http://example.org?query=first-value&query=second-value'),
+				],
+				[
+					'relative URL path as string + path with leading slash',
 					{
 						url: '/path',
 						baseUrl: 'http://example.org',
