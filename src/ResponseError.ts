@@ -6,15 +6,19 @@ export class ResponseError extends Error {
 	response: RetrieveResponse['response']
 	data: RetrieveResponse['data']
 
-	constructor (retrieveResponse: RetrieveResponse, error?: Error) {
-		super(
-			error?.message || `${retrieveResponse.response.status} ${retrieveResponse.response.statusText}`.trim(),
-			error?.cause ? { cause: error.cause } : undefined,
-		)
+	constructor ({ request, response, data }: RetrieveResponse, error?: Error) {
+		let message
+		if (error?.message) {
+			message = error.message
+		} else {
+			const status = `${response.status} ${response.statusText}`.trim()
+			message = `Request “${request.method} ${request.url}” failed with status code ${status}`
+		}
+		super(message, error?.cause ? { cause: error.cause } : undefined)
 
-		this.request = retrieveResponse.request
-		this.response = retrieveResponse.response
-		this.data = retrieveResponse.data
+		this.request = request
+		this.response = response
+		this.data = data
 	}
 
 	toJSON () {

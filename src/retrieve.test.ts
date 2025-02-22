@@ -763,7 +763,7 @@ describe('retrieve', () => {
 
 						return Promise.resolve(response)
 					},
-					new Error('400 Bad Request'),
+					new Error('Request “GET http://example.org/” failed with status code 400 Bad Request'),
 					null,
 				],
 				[
@@ -779,7 +779,7 @@ describe('retrieve', () => {
 
 						return Promise.resolve(response)
 					},
-					new Error('400 Bad Request'),
+					new Error('Request “GET http://example.org/” failed with status code 400 Bad Request'),
 					'Oopsie!',
 				],
 				[
@@ -795,7 +795,7 @@ describe('retrieve', () => {
 
 						return Promise.resolve(response)
 					},
-					new Error('400 Bad Request'),
+					new Error('Request “GET http://example.org/” failed with status code 400 Bad Request'),
 					{
 						error: 'oh no',
 					},
@@ -813,7 +813,7 @@ describe('retrieve', () => {
 
 						return Promise.resolve(response)
 					},
-					new Error('400 Bad Request'),
+					new Error('Request “GET http://example.org/” failed with status code 400 Bad Request'),
 					{
 						error: 'oh no',
 					},
@@ -831,7 +831,7 @@ describe('retrieve', () => {
 
 						return Promise.resolve(response)
 					},
-					new Error('400 Bad Request'),
+					new Error('Request “GET http://example.org/” failed with status code 400 Bad Request'),
 					{
 						error: 'oh no',
 					},

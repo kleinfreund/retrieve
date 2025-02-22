@@ -19,9 +19,9 @@ export class RetrieveResponse {
 	 */
 	data: unknown
 
-	constructor (retrieveResponse: { request: Request, response: Response, data: unknown }) {
-		this.request = retrieveResponse.request
-		this.response = retrieveResponse.response
-		this.data = retrieveResponse.data
+	constructor ({ request, response, data }: { request: Request, response: Response, data: unknown }) {
+		this.request = request
+		this.response = response
+		this.data = data
 	}
 }
