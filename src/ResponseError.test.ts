@@ -3,6 +3,7 @@ import { ResponseError } from './ResponseError.js'
 
 describe('ResponseError', () => {
 	test('has the expected data', () => {
+		expect.assertions(4)
 		const request = new Request('http://example.org')
 		const response = new Response()
 		const data = null
@@ -36,6 +37,7 @@ describe('ResponseError', () => {
 			'Error message',
 		],
 	])('has the expected message', (error, expectedMessage) => {
+		expect.assertions(1)
 		const responseError = new ResponseError({
 			request: new Request('http://example.org'),
 			response: new Response(undefined, { status: 400, statusText: 'Bad Request' }),
