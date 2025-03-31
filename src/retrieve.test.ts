@@ -96,6 +96,14 @@ describe('retrieve', () => {
 					new URL('http://example.org?newParam=new-value'),
 				],
 				[
+					'absolute URL as string + empty query parameters (URLSearchParams)',
+					{
+						url: 'http://example.org?query=value',
+						params: new URLSearchParams(),
+					},
+					new URL('http://example.org'),
+				],
+				[
 					'absolute URL as string + query parameters (URLSearchParams)',
 					{
 						url: 'http://example.org?query=value',
