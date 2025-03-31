@@ -37,7 +37,7 @@ export interface RetrieveConfig {
 	 *   - “plain/text” if `config.data` is a string
 	 *   - “application/json” if `config.data` is set and the request method isn't GET or HEAD
 	 *
-	 *   Note that if `config.data` is set to a `FormData` object, an existing content type **will be removed**. Read the warning on [MDN: Using FormData Objects: Sending files using a FormData object](https://developer.mozilla.org/en-US/docs/Web/API/FormData/Using_FormData_Objects#sending_files_using_a_formdata_object) for an explanation.
+	 *   Note, that if `config.data` is set to a `FormData` object, an existing content type **will be removed**. Read the warning on [MDN: Using FormData Objects: Sending files using a FormData object](https://developer.mozilla.org/en-US/docs/Web/API/FormData/Using_FormData_Objects#sending_files_using_a_formdata_object) for an explanation.
 	 * - **Body**: If `config.data` is set, it will be used for `init.body`. See `config.data` description for more information. Otherwise, if `config.init.body` is set, it will be used for fetch's `init.body`.
 	 * - **Signal**: If `config.timeout` is set to a positive number, it will be used to create `init.signal` using `AbortSignal.timeout(config.timeout)`.
 	 */
@@ -221,13 +221,13 @@ export interface RetrieveConfig {
 
 type OptionalPromise<T> = T | Promise<T>
 
-export type BeforeRequestHandler = (request: Request) => OptionalPromise<Response | Request | undefined>
+export type BeforeRequestHandler = (request: Request, init: RequestInit) => OptionalPromise<Response | Request | undefined>
 
-export type RequestErrorHandler = (error: Error, request: Request) => OptionalPromise<Response | Error | undefined>
+export type RequestErrorHandler = (error: Error, request: Request, init: RequestInit) => OptionalPromise<Response | Error | undefined>
 
-export type ResponseSuccessHandler = (retrieveResponse: RetrieveResponse) => OptionalPromise<RetrieveResponse | undefined>
+export type ResponseSuccessHandler = (retrieveResponse: RetrieveResponse, init: RequestInit) => OptionalPromise<RetrieveResponse | undefined>
 
-export type ResponseErrorHandler = (error: Error, retrieveResponse: RetrieveResponse) => OptionalPromise<RetrieveResponse | Response | Error | undefined>
+export type ResponseErrorHandler = (error: Error, retrieveResponse: RetrieveResponse, init: RequestInit) => OptionalPromise<RetrieveResponse | Response | Error | undefined>
 
 type BodyType = 'arrayBuffer' | 'blob' | 'formData' | 'json' | 'text'
 
@@ -247,28 +247,40 @@ const CONTENT_TYPES: Record<BodyType, string> = {
 }
 
 /**
- * Takes a `RetrieveConfig` or `Request` object and calls `fetch` using it data.
+ * Takes a `RetrieveConfig` or `Request` object and makes a network request using `fetch`.
  *
- * When providing a `RetrieveConfig`, several preprocessing steps are performed before creating a `Request` object. That `Request` object is then passed to any `config.beforeRequestHandlers` before it's ultimately passed to `fetch`.
+ * When providing a `RetrieveConfig`, several preprocessing steps are performed before creating a `Request` object. That `Request` object (and the `RequestInit` object that was used to create it) is then passed to `config.beforeRequestHandlers` before it's ultimately passed to `fetch`.
  *
- * When providing a `Request` object, no preprocessing steps are performed and no interceptors are executed. The `Request` is passed to `fetch` directly.
+ * When providing a `Request` object, no preprocessing steps are performed and no interceptors are executed. The `Request` is passed to `fetch` directly. This is primarily intended for retrying requests inside `config.responseErrorHandlers`.
  */
 export async function retrieve (configOrRequest: RetrieveConfig | Request): Promise<RetrieveResponse> {
-	let config, request
+	let beforeRequestHandlers: BeforeRequestHandler[]
+	let requestErrorHandlers: RequestErrorHandler[]
+	let responseSuccessHandlers: ResponseSuccessHandler[]
+	let responseErrorHandlers: ResponseErrorHandler[]
+	let init: RequestInit
+	let request: Request
 	if (configOrRequest instanceof Request) {
-		config = { url: new URL(configOrRequest.url) }
+		beforeRequestHandlers = []
+		requestErrorHandlers = []
+		responseSuccessHandlers = []
+		responseErrorHandlers = []
+		init = {}
 		request = configOrRequest
 	} else {
-		config = configOrRequest
-		const url = createUrl(config)
-		const init = createInit(config)
+		beforeRequestHandlers = configOrRequest.beforeRequestHandlers ?? []
+		requestErrorHandlers = configOrRequest.requestErrorHandlers ?? []
+		responseSuccessHandlers = configOrRequest.responseSuccessHandlers ?? []
+		responseErrorHandlers = configOrRequest.responseErrorHandlers ?? []
+		const url = createUrl(configOrRequest)
+		init = createInit(configOrRequest)
 		request = new Request(url, init)
 	}
 
 	let response: Response | undefined
 
-	for (const beforeRequestHandler of config.beforeRequestHandlers ?? []) {
-		const result = await beforeRequestHandler(request)
+	for (const beforeRequestHandler of beforeRequestHandlers) {
+		const result = await beforeRequestHandler(request, init)
 		if (result instanceof Response) {
 			response = result
 			// At this point, the current before request handler has corrected the error state (by returning a new `Response` object) and no further before request handlers are processed. Notably, the call to `fetch` will be skipped entirely.
@@ -285,8 +297,8 @@ export async function retrieve (configOrRequest: RetrieveConfig | Request): Prom
 	} catch (error) {
 		let requestError = createRequestError(error, config.requestErrorMessage)
 
-		for (const requestErrorHandler of config.requestErrorHandlers ?? []) {
-			const result = await requestErrorHandler(requestError, request)
+		for (const requestErrorHandler of requestErrorHandlers) {
+			const result = await requestErrorHandler(requestError, request, init)
 			if (result instanceof Response) {
 				response = result
 				// At this point, the current request error handler has corrected the error state (by returning a new `Response` object) and no further request error handlers are processed.
@@ -306,8 +318,8 @@ export async function retrieve (configOrRequest: RetrieveConfig | Request): Prom
 	let retrieveResponse = await createRetrieveResponse(request, response)
 
 	if (retrieveResponse.response.ok) {
-		for (const responseSuccessHandler of config.responseSuccessHandlers ?? []) {
-			const result = await responseSuccessHandler(retrieveResponse)
+		for (const responseSuccessHandler of responseSuccessHandlers) {
+			const result = await responseSuccessHandler(retrieveResponse, init)
 			retrieveResponse = result !== undefined ? result : retrieveResponse
 		}
 
@@ -316,8 +328,8 @@ export async function retrieve (configOrRequest: RetrieveConfig | Request): Prom
 
 	let error: Error = new ResponseError(retrieveResponse, config.responseErrorMessage)
 
-	for (const responseErrorHandler of config.responseErrorHandlers ?? []) {
-		const result = await responseErrorHandler(error, retrieveResponse)
+	for (const responseErrorHandler of responseErrorHandlers) {
+		const result = await responseErrorHandler(error, retrieveResponse, init)
 
 		if (result instanceof RetrieveResponse) {
 			retrieveResponse = result
@@ -373,14 +385,12 @@ function createInit (config: RetrieveConfig): RequestInit {
 
 	// Process request headers
 	init.headers = new Headers(originalInit.headers)
-
 	if (!init.headers.has('x-request-with')) {
 		init.headers.set('x-requested-with', 'XMLHttpRequest')
 	}
 
 	// Determines request body type
 	let bodyType: BodyType | undefined
-
 	if ('data' in config) {
 		const contentType = init.headers.get(CONTENT_TYPE)
 

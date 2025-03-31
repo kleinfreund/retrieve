@@ -128,7 +128,7 @@ The request URL.
 	- Absolute URL string: Will be used as-is.
 	- Relative URL path string: Will be turned into an absolute URL (using `config.baseUrl`).
 
-**Note**: Providing a `Request` object to `config.url` is intentionally not possible. If you want to use a `Request` object, provide it _instead_ of `config` (see [request](#request)).
+**Note**: Providing a `Request` object to `config.url` is intentionally not possible. If you want to use a `Request` object, provide it _instead_ of `configOrRequest` (see [request](#request)).
 
 ##### `config.baseUrl` (optional)
 
@@ -154,7 +154,7 @@ The following changes are made to the `init` object before it is passed to `fetc
 	- “plain/text” if `config.data` is a string
 	- “application/json” if `config.data` is set and the request method isn't GET or HEAD
 
-	Note that if `config.data` is set to a `FormData` object, an existing content type **will be removed**. Read the warning on [MDN: Using FormData Objects: Sending files using a FormData object](https://developer.mozilla.org/en-US/docs/Web/API/FormData/Using_FormData_Objects#sending_files_using_a_formdata_object) for an explanation.
+	Note, that if `config.data` is set to a `FormData` object, an existing content type **will be removed**. Read the warning on [MDN: Using FormData Objects: Sending files using a FormData object](https://developer.mozilla.org/en-US/docs/Web/API/FormData/Using_FormData_Objects#sending_files_using_a_formdata_object) for an explanation.
 - **Body**: If `config.data` is set, it will be used for fetch's `init.body`. See `config.data` description for more information. Otherwise, if `config.init.body` is set, it will be used for fetch's `init.body`.
 - **Signal**: If `config.timeout` is set to a positive number, it will be used to create fetch's `init.signal` using `AbortSignal.timeout(config.timeout)`.
 
@@ -362,7 +362,7 @@ try {
 }
 ```
 
-Note that using `config.responseErrorHandlers` might change the thrown value from a `ResponseError` object to a plain `Error` object (or technically anything returned by a response error handler that's not a `Response` object). It's up to you.
+Note, that using `config.responseErrorHandlers` might change the thrown value from a `ResponseError` object to a plain `Error` object (or technically anything returned by a response error handler that's not a `Response` object). It's up to you.
 
 ## Examples
 
