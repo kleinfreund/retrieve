@@ -89,6 +89,8 @@ export interface RetrieveConfig {
 	 */
 	beforeRequestHandlers?: BeforeRequestHandler[]
 
+	afterRequestHandlers?: AfterRequestHandler[]
+
 	/**
 	 * Run when sending the request failed (i.e. the promise returned by `fetch` was rejected). Allows implementing corrective measures.
 	 *
@@ -207,6 +209,8 @@ type OptionalPromise<T> = T | Promise<T>
 
 export type BeforeRequestHandler = (request: Request, init: RequestInit) => OptionalPromise<Response | Request | undefined>
 
+export type AfterRequestHandler = (response: Promise<Response>, request: Request, init: RequestInit) => void
+
 export type RequestErrorHandler = (error: Error, request: Request, init: RequestInit) => OptionalPromise<Response | Error | undefined>
 
 export type ResponseSuccessHandler = (retrieveResponse: RetrieveResponse, init: RequestInit) => OptionalPromise<RetrieveResponse | undefined>
@@ -239,6 +243,7 @@ const CONTENT_TYPES: Record<BodyType, string> = {
  */
 export async function retrieve (configOrRequest: RetrieveConfig | Request): Promise<RetrieveResponse> {
 	let beforeRequestHandlers: BeforeRequestHandler[]
+	let afterRequestHandlers: AfterRequestHandler[]
 	let requestErrorHandlers: RequestErrorHandler[]
 	let responseSuccessHandlers: ResponseSuccessHandler[]
 	let responseErrorHandlers: ResponseErrorHandler[]
@@ -246,6 +251,7 @@ export async function retrieve (configOrRequest: RetrieveConfig | Request): Prom
 	let request: Request
 	if (configOrRequest instanceof Request) {
 		beforeRequestHandlers = []
+		afterRequestHandlers = []
 		requestErrorHandlers = []
 		responseSuccessHandlers = []
 		responseErrorHandlers = []
@@ -253,6 +259,7 @@ export async function retrieve (configOrRequest: RetrieveConfig | Request): Prom
 		request = configOrRequest
 	} else {
 		beforeRequestHandlers = configOrRequest.beforeRequestHandlers ?? []
+		afterRequestHandlers = configOrRequest.afterRequestHandlers ?? []
 		requestErrorHandlers = configOrRequest.requestErrorHandlers ?? []
 		responseSuccessHandlers = configOrRequest.responseSuccessHandlers ?? []
 		responseErrorHandlers = configOrRequest.responseErrorHandlers ?? []
@@ -275,9 +282,18 @@ export async function retrieve (configOrRequest: RetrieveConfig | Request): Prom
 	}
 
 	try {
-		if (!(response instanceof Response)) {
-			response = await fetch(request)
+		let responsePromise
+		if (response instanceof Response) {
+			responsePromise = Promise.resolve(response)
+		} else {
+			responsePromise = fetch(request)
 		}
+
+		for (const afterRequestHandler of afterRequestHandlers) {
+			afterRequestHandler(responsePromise, request, init)
+		}
+
+		response = await responsePromise
 	} catch (error) {
 		let requestError = createRequestError(error)
 
