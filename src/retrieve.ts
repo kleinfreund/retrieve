@@ -203,6 +203,11 @@ export interface RetrieveConfig {
 	responseErrorHandlers?: ResponseErrorHandler[]
 }
 
+interface NormalizedRequestInit extends RequestInit {
+	method: string
+	headers: Headers
+}
+
 type OptionalPromise<T> = T | Promise<T>
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Interceptor<T extends (...args: any) => any> =
@@ -211,13 +216,13 @@ type Interceptor<T extends (...args: any) => any> =
 	// Allow interceptors to implicitly return
 	| ((...args: Parameters<T>) => void)
 
-export type BeforeRequestHandler = Interceptor<(request: Request, init: RequestInit) => Response | Request>
+export type BeforeRequestHandler = Interceptor<(request: Request, init: NormalizedRequestInit) => Response | Request>
 
-export type RequestErrorHandler = Interceptor<(error: Error, request: Request, init: RequestInit) => Response | Error>
+export type RequestErrorHandler = Interceptor<(error: Error, request: Request, init: NormalizedRequestInit) => Response | Error>
 
-export type ResponseSuccessHandler = Interceptor<(retrieveResponse: RetrieveResponse, init: RequestInit) => RetrieveResponse>
+export type ResponseSuccessHandler = Interceptor<(retrieveResponse: RetrieveResponse, init: NormalizedRequestInit) => RetrieveResponse>
 
-export type ResponseErrorHandler = Interceptor<(error: Error, retrieveResponse: RetrieveResponse, init: RequestInit) => RetrieveResponse | Response | Error>
+export type ResponseErrorHandler = Interceptor<(error: Error, retrieveResponse: RetrieveResponse, init: NormalizedRequestInit) => RetrieveResponse | Response | Error>
 
 type BodyType = 'arrayBuffer' | 'blob' | 'formData' | 'json' | 'text'
 
@@ -248,14 +253,16 @@ export async function retrieve (configOrRequest: RetrieveConfig | Request): Prom
 	let requestErrorHandlers: RequestErrorHandler[]
 	let responseSuccessHandlers: ResponseSuccessHandler[]
 	let responseErrorHandlers: ResponseErrorHandler[]
-	let init: RequestInit
+	let init: NormalizedRequestInit
 	let request: Request
 	if (configOrRequest instanceof Request) {
+		// Using empty arrays for all interceptors when receiving a `Request` object instead of a `RetrieveConfig` keeps the control flow further below simple.
 		beforeRequestHandlers = []
 		requestErrorHandlers = []
 		responseSuccessHandlers = []
 		responseErrorHandlers = []
-		init = {}
+		// Initializing the `init` variable is only done to keep proper types: I'd otherwise have to change the control flow below to only have the `init` variable in scope when a `RetrieveConfig` is being processed.
+		init = { method: '', headers: new Headers() }
 		request = configOrRequest
 	} else {
 		beforeRequestHandlers = configOrRequest.beforeRequestHandlers ?? []
@@ -369,19 +376,24 @@ function createUrl (config: RetrieveConfig): URL {
 }
 
 /**
- * Creates an `RequestInit` object that will be passed to `fetch` as its `init` parameter.
+ * Creates a `RequestInit` object that will be passed to the `Request` constructor as its `init` parameter.
  */
-function createInit (config: RetrieveConfig): RequestInit {
+function createInit (config: RetrieveConfig): NormalizedRequestInit {
 	const originalInit = config.init ?? {}
-	const init: RequestInit = { ...originalInit }
 
 	// Process request method
-	init.method = (originalInit.method ?? 'GET').toUpperCase()
+	const method = (originalInit.method ?? 'GET').toUpperCase()
 
 	// Process request headers
-	init.headers = new Headers(originalInit.headers)
-	if (!init.headers.has('x-request-with')) {
-		init.headers.set('x-requested-with', 'XMLHttpRequest')
+	const headers = new Headers(originalInit.headers)
+	if (!headers.has('x-request-with')) {
+		headers.set('x-requested-with', 'XMLHttpRequest')
+	}
+
+	const init: NormalizedRequestInit = {
+		...originalInit,
+		method,
+		headers,
 	}
 
 	// Determines request body type
