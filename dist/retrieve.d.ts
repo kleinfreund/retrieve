@@ -213,11 +213,16 @@ interface RetrieveConfig {
      */
     responseErrorHandlers?: ResponseErrorHandler[];
 }
+interface NormalizedRequestInit extends RequestInit {
+    method: string;
+    headers: Headers;
+}
 type OptionalPromise<T> = T | Promise<T>;
-type BeforeRequestHandler = (request: Request, init: RequestInit) => OptionalPromise<Response | Request | undefined>;
-type RequestErrorHandler = (error: Error, request: Request, init: RequestInit) => OptionalPromise<Response | Error | undefined>;
-type ResponseSuccessHandler = (retrieveResponse: RetrieveResponse, init: RequestInit) => OptionalPromise<RetrieveResponse | undefined>;
-type ResponseErrorHandler = (error: Error, retrieveResponse: RetrieveResponse, init: RequestInit) => OptionalPromise<RetrieveResponse | Response | Error | undefined>;
+type Interceptor<T extends (...args: any) => any> = ((...args: Parameters<T>) => OptionalPromise<ReturnType<T> | undefined>) | ((...args: Parameters<T>) => void);
+type BeforeRequestHandler = Interceptor<(request: Request, init: NormalizedRequestInit) => Response | Request>;
+type RequestErrorHandler = Interceptor<(error: Error, request: Request, init: NormalizedRequestInit) => Response | Error>;
+type ResponseSuccessHandler = Interceptor<(retrieveResponse: RetrieveResponse, init: NormalizedRequestInit) => RetrieveResponse>;
+type ResponseErrorHandler = Interceptor<(error: Error, retrieveResponse: RetrieveResponse, init: NormalizedRequestInit) => RetrieveResponse | Response | Error>;
 /**
  * Takes a `RetrieveConfig` or `Request` object and makes a network request using `fetch`.
  *
