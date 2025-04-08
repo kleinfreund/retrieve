@@ -204,14 +204,20 @@ export interface RetrieveConfig {
 }
 
 type OptionalPromise<T> = T | Promise<T>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Interceptor<T extends (...args: any) => any> =
+	// Accept interceptor return values wrapped in a promise or not
+	((...args: Parameters<T>) => OptionalPromise<ReturnType<T> | undefined>)
+	// Allow interceptors to implicitly return
+	| ((...args: Parameters<T>) => void)
 
-export type BeforeRequestHandler = (request: Request, init: RequestInit) => OptionalPromise<Response | Request | undefined>
+export type BeforeRequestHandler = Interceptor<(request: Request, init: RequestInit) => Response | Request>
 
-export type RequestErrorHandler = (error: Error, request: Request, init: RequestInit) => OptionalPromise<Response | Error | undefined>
+export type RequestErrorHandler = Interceptor<(error: Error, request: Request, init: RequestInit) => Response | Error>
 
-export type ResponseSuccessHandler = (retrieveResponse: RetrieveResponse, init: RequestInit) => OptionalPromise<RetrieveResponse | undefined>
+export type ResponseSuccessHandler = Interceptor<(retrieveResponse: RetrieveResponse, init: RequestInit) => RetrieveResponse>
 
-export type ResponseErrorHandler = (error: Error, retrieveResponse: RetrieveResponse, init: RequestInit) => OptionalPromise<RetrieveResponse | Response | Error | undefined>
+export type ResponseErrorHandler = Interceptor<(error: Error, retrieveResponse: RetrieveResponse, init: RequestInit) => RetrieveResponse | Response | Error>
 
 type BodyType = 'arrayBuffer' | 'blob' | 'formData' | 'json' | 'text'
 
