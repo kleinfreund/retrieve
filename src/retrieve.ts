@@ -464,7 +464,7 @@ async function createRetrieveResponse (request: Request, response: Response) {
 	}
 
 	try {
-		const data = bodyType ? await response[bodyType]() : null
+		const data = bodyType ? await response.clone()[bodyType]() : null
 
 		return new RetrieveResponse({ request, response, data })
 	} catch (error) {
