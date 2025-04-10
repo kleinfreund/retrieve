@@ -15,7 +15,8 @@ function finalizeContext (context) {
 	return context
 }
 
-/** @type {import('semantic-release').Options} */ const options = {
+/** @type {import('semantic-release').Options} */
+export default {
 	branches: [
 		'main',
 	],
@@ -56,5 +57,3 @@ function finalizeContext (context) {
 		'@semantic-release/git',
 	],
 }
-
-export default options
