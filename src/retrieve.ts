@@ -1,7 +1,7 @@
 import { ResponseError } from './ResponseError.js'
 import { RetrieveResponse } from './RetrieveResponse.js'
 
-export interface RetrieveConfig {
+export interface RetrieveConfig<Success = unknown, Failure = unknown> {
 	/**
 	 * Request URL.
 	 *
@@ -153,7 +153,7 @@ export interface RetrieveConfig {
 	 * }
 	 * ```
 	 */
-	responseSuccessHandlers?: ResponseSuccessHandler[]
+	responseSuccessHandlers?: ResponseSuccessHandler<Success>[]
 
 	/**
 	 * Run when sending the request succeeded and a response with a status code >=300 was returned (i.e. the promise returned by `fetch` is fulfilled and yields a `Response` object whose `ok` property is set to `false`).
@@ -200,7 +200,7 @@ export interface RetrieveConfig {
 	 * }
 	 * ```
 	 */
-	responseErrorHandlers?: ResponseErrorHandler[]
+	responseErrorHandlers?: ResponseErrorHandler<Success, Failure>[]
 }
 
 interface NormalizedRequestInit extends RequestInit {
@@ -220,9 +220,9 @@ export type BeforeRequestHandler = Interceptor<(request: Request, init: Normaliz
 
 export type RequestErrorHandler = Interceptor<(error: Error, request: Request, init: NormalizedRequestInit) => Response | Error>
 
-export type ResponseSuccessHandler = Interceptor<(retrieveResponse: RetrieveResponse, init: NormalizedRequestInit) => RetrieveResponse>
+export type ResponseSuccessHandler<Success> = Interceptor<(retrieveResponse: RetrieveResponse<Success>, init: NormalizedRequestInit) => RetrieveResponse<Success>>
 
-export type ResponseErrorHandler = Interceptor<(error: Error, retrieveResponse: RetrieveResponse, init: NormalizedRequestInit) => RetrieveResponse | Response | Error>
+export type ResponseErrorHandler<Success, Failure> = Interceptor<(error: Error, retrieveResponse: RetrieveResponse<Failure>, init: NormalizedRequestInit) => RetrieveResponse<Success> | Response | Error>
 
 type BodyType = 'arrayBuffer' | 'blob' | 'formData' | 'json' | 'text'
 
@@ -248,11 +248,11 @@ const CONTENT_TYPES: Record<BodyType, string> = {
  *
  * When providing a `Request` object, no preprocessing steps are performed and no interceptors are executed. The `Request` is passed to `fetch` directly. This is primarily intended for retrying requests inside `config.responseErrorHandlers`.
  */
-export async function retrieve (configOrRequest: RetrieveConfig | Request): Promise<RetrieveResponse> {
+export async function retrieve<Success = unknown, Failure = unknown> (configOrRequest: RetrieveConfig<Success, Failure> | Request): Promise<RetrieveResponse<Success>> {
 	let beforeRequestHandlers: BeforeRequestHandler[]
 	let requestErrorHandlers: RequestErrorHandler[]
-	let responseSuccessHandlers: ResponseSuccessHandler[]
-	let responseErrorHandlers: ResponseErrorHandler[]
+	let responseSuccessHandlers: ResponseSuccessHandler<Success>[]
+	let responseErrorHandlers: ResponseErrorHandler<Success, Failure>[]
 	let init: NormalizedRequestInit
 	let request: Request
 	if (configOrRequest instanceof Request) {
@@ -312,39 +312,34 @@ export async function retrieve (configOrRequest: RetrieveConfig | Request): Prom
 		// Conversely, `response` being set here is the signal for the request error to have been corrected by a request error handler and for retrieve to move on to processing the response as if no request error had occurred in the first place.
 	}
 
-	const data = await deserializeResponseBody(response)
-	let retrieveResponse = new RetrieveResponse({ request, response, data })
-
-	if (retrieveResponse.response.ok) {
+	if (response.ok) {
+		const data = await deserializeResponseBody(response) as Success
+		let retrieveSuccessResponse = new RetrieveResponse({ request, response, data })
 		for (const responseSuccessHandler of responseSuccessHandlers) {
-			const result = await responseSuccessHandler(retrieveResponse, init)
-			retrieveResponse = result !== undefined ? result : retrieveResponse
+			const result = await responseSuccessHandler(retrieveSuccessResponse, init)
+			retrieveSuccessResponse = result !== undefined ? result : retrieveSuccessResponse
 		}
 
-		return retrieveResponse
+		return retrieveSuccessResponse
 	}
 
-	let error: Error = new ResponseError(retrieveResponse)
+	const data = await deserializeResponseBody(response) as Failure
+	const retrieveErrorResponse = new RetrieveResponse({ request, response, data })
+	let error: Error = new ResponseError(retrieveErrorResponse)
 
 	for (const responseErrorHandler of responseErrorHandlers) {
-		const result = await responseErrorHandler(error, retrieveResponse, init)
+		const result = await responseErrorHandler(error, retrieveErrorResponse, init)
 
 		if (result instanceof RetrieveResponse) {
-			retrieveResponse = result
-			// At this point, the current response error handler has corrected the error state (by returning a `Response` object) and no further response error handlers are processed.
-			break
+			// At this point, the current response error handler has corrected the error state (by returning a `RetrieveResponse` object) and no further response error handlers are processed.
+			return result
 		} else if (result instanceof Response) {
-			const data = await deserializeResponseBody(result)
-			retrieveResponse = new RetrieveResponse({ request, response: result, data })
 			// At this point, the current response error handler has corrected the error state (by returning a `Response` object) and no further response error handlers are processed.
-			break
+			const data = await deserializeResponseBody(result) as Success
+			return new RetrieveResponse({ request, response: result, data })
 		} else {
 			error = result !== undefined ? result : error
 		}
-	}
-
-	if (retrieveResponse.response.ok) {
-		return retrieveResponse
 	}
 
 	throw error
@@ -353,7 +348,7 @@ export async function retrieve (configOrRequest: RetrieveConfig | Request): Prom
 /**
  * Creates a `URL` object that will be passed to `fetch` as its `input` parameter.
  */
-function createUrl (config: RetrieveConfig): URL {
+function createUrl<Success = unknown, Failure = unknown> (config: RetrieveConfig<Success, Failure>): URL {
 	// Process request URL
 	const baseUrl = config.baseUrl ?? (typeof window !== 'undefined' ? window.location.origin : undefined)
 	const url = new URL(config.url, baseUrl)
@@ -380,7 +375,7 @@ function createUrl (config: RetrieveConfig): URL {
 /**
  * Creates a `RequestInit` object that will be passed to the `Request` constructor as its `init` parameter.
  */
-function createInit (config: RetrieveConfig): NormalizedRequestInit {
+function createInit<Success = unknown, Failure = unknown> (config: RetrieveConfig<Success, Failure>): NormalizedRequestInit {
 	const originalInit = config.init ?? {}
 
 	// Process request method

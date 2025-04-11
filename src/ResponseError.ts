@@ -1,12 +1,12 @@
 import type { RetrieveResponse } from './RetrieveResponse.js'
 
-export class ResponseError extends Error {
+export class ResponseError<Data = unknown> extends Error {
 	name = 'ResponseError'
-	request: RetrieveResponse['request']
-	response: RetrieveResponse['response']
-	data: RetrieveResponse['data']
+	request: RetrieveResponse<Data>['request']
+	response: RetrieveResponse<Data>['response']
+	data: RetrieveResponse<Data>['data']
 
-	constructor ({ request, response, data }: RetrieveResponse, error?: Error) {
+	constructor ({ request, response, data }: RetrieveResponse<Data>, error?: Error) {
 		let message
 		if (error?.message) {
 			message = error.message

@@ -1,4 +1,4 @@
-export class RetrieveResponse {
+export class RetrieveResponse<Data = unknown> {
 	/**
 	 * Original `Request` object passed to `fetch`.
 	 */
@@ -17,9 +17,9 @@ export class RetrieveResponse {
 	 * - Response content type starts with “application/json” or “application/problem+json”: the response body is parsed as JSON (using `Response.prototype.json`).
 	 * - For everything else: the response body is parsed as text (using `Response.prototype.text`).
 	 */
-	data: unknown
+	data: Data
 
-	constructor ({ request, response, data }: { request: Request, response: Response, data: unknown }) {
+	constructor ({ request, response, data }: { request: Request, response: Response, data: Data }) {
 		this.request = request
 		this.response = response
 		this.data = data
