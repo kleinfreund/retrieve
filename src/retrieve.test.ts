@@ -1250,7 +1250,7 @@ describe('retrieve', () => {
 				],
 			})
 
-			expect(promise).rejects.toThrowError(expectedError)
+			await expect(promise).rejects.toThrowError(expectedError)
 		})
 	})
 })
