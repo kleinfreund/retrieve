@@ -760,8 +760,8 @@ describe('retrieve', () => {
 				try {
 					await retrieve({ url: 'http://example.org' })
 				} catch (error) {
-					expect(error instanceof ResponseError).toBe(true)
-					const err = error as ResponseError
+					expect(error instanceof Error).toBe(true)
+					const err = error as Error
 					expect(err.message).toEqual(expectedError.message)
 				}
 				expect(spy).toHaveBeenCalledTimes(1)

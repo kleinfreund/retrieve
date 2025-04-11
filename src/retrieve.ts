@@ -312,7 +312,8 @@ export async function retrieve (configOrRequest: RetrieveConfig | Request): Prom
 		// Conversely, `response` being set here is the signal for the request error to have been corrected by a request error handler and for retrieve to move on to processing the response as if no request error had occurred in the first place.
 	}
 
-	let retrieveResponse = await createRetrieveResponse(request, response)
+	const data = await deserializeResponseBody(response)
+	let retrieveResponse = new RetrieveResponse({ request, response, data })
 
 	if (retrieveResponse.response.ok) {
 		for (const responseSuccessHandler of responseSuccessHandlers) {
@@ -333,7 +334,8 @@ export async function retrieve (configOrRequest: RetrieveConfig | Request): Prom
 			// At this point, the current response error handler has corrected the error state (by returning a `Response` object) and no further response error handlers are processed.
 			break
 		} else if (result instanceof Response) {
-			retrieveResponse = await createRetrieveResponse(request, result)
+			const data = await deserializeResponseBody(result)
+			retrieveResponse = new RetrieveResponse({ request, response: result, data })
 			// At this point, the current response error handler has corrected the error state (by returning a `Response` object) and no further response error handlers are processed.
 			break
 		} else {
@@ -451,7 +453,7 @@ function createRequestError (error: unknown): Error {
 /**
  * Takes a `Response` object and deserializes its body (if set)
  */
-async function createRetrieveResponse (request: Request, response: Response) {
+async function deserializeResponseBody (response: Response) {
 	const contentType = response.headers.get(CONTENT_TYPE) ?? ''
 	let bodyType: BodyType | undefined
 
@@ -463,11 +465,5 @@ async function createRetrieveResponse (request: Request, response: Response) {
 		bodyType = 'text'
 	}
 
-	try {
-		const data = bodyType ? await response.clone()[bodyType]() : null
-
-		return new RetrieveResponse({ request, response, data })
-	} catch (error) {
-		throw new ResponseError({ request, response, data: null }, error as Error)
-	}
+	return bodyType ? await response.clone()[bodyType]() : null
 }
