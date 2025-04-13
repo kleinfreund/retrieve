@@ -348,7 +348,7 @@ export async function retrieve<Success = unknown, Failure = unknown> (configOrRe
 /**
  * Creates a `URL` object that will be passed to `fetch` as its `input` parameter.
  */
-function createUrl<Success = unknown, Failure = unknown> (config: RetrieveConfig<Success, Failure>): URL {
+function createUrl<Success, Failure> (config: RetrieveConfig<Success, Failure>): URL {
 	// Process request URL
 	const baseUrl = config.baseUrl ?? (typeof window !== 'undefined' ? window.location.origin : undefined)
 	const url = new URL(config.url, baseUrl)
@@ -375,7 +375,7 @@ function createUrl<Success = unknown, Failure = unknown> (config: RetrieveConfig
 /**
  * Creates a `RequestInit` object that will be passed to the `Request` constructor as its `init` parameter.
  */
-function createInit<Success = unknown, Failure = unknown> (config: RetrieveConfig<Success, Failure>): NormalizedRequestInit {
+function createInit<Success, Failure> (config: RetrieveConfig<Success, Failure>): NormalizedRequestInit {
 	const originalInit = config.init ?? {}
 
 	// Process request method
