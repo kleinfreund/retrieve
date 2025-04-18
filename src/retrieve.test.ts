@@ -142,45 +142,26 @@ describe('retrieve', () => {
 				],
 			])('%s', async (_title, config, expectedInput) => {
 				expect.assertions(2)
-				vi.spyOn(globalThis, 'fetch').mockImplementation(async (...parameters) => {
-					expect(new Request(...parameters)).toMatchRequest(new Request(expectedInput, {
-						method: 'GET',
-						headers: new Headers({
-							'x-requested-with': 'XMLHttpRequest',
-						}),
-					}))
-
+				const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
 					return new Response('OK')
 				})
 
 				await retrieve(config)
 
 				expect(fetch).toHaveBeenCalledTimes(1)
+				expect(spy).toHaveBeenCalledWith(expect.toMatchRequest(new Request(expectedInput, {
+					method: 'GET',
+					headers: new Headers({
+						'x-requested-with': 'XMLHttpRequest',
+					}),
+				})))
 			})
 		})
 
 		describe('init', () => {
 			test('config.init parameters are passed to fetch', async () => {
 				expect.assertions(2)
-				vi.spyOn(globalThis, 'fetch').mockImplementation(async (...parameters) => {
-					expect(new Request(...parameters)).toMatchRequest(new Request(new URL('http://example.org'), {
-						body: 'body',
-						cache: 'default',
-						credentials: 'same-origin',
-						headers: new Headers({
-							'x-test-header': 'header-value',
-							'x-requested-with': 'XMLHttpRequest',
-						}),
-						integrity: 'hash',
-						keepalive: true,
-						method: 'POST',
-						mode: 'same-origin',
-						redirect: 'follow',
-						referrer: 'http://referrer.org',
-						signal: null,
-						window: null,
-					}))
-
+				const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
 					return new Response('OK')
 				})
 
@@ -205,6 +186,23 @@ describe('retrieve', () => {
 				})
 
 				expect(fetch).toHaveBeenCalledTimes(1)
+				expect(spy).toHaveBeenCalledWith(expect.toMatchRequest(new Request(new URL('http://example.org'), {
+					body: 'body',
+					cache: 'default',
+					credentials: 'same-origin',
+					headers: new Headers({
+						'x-test-header': 'header-value',
+						'x-requested-with': 'XMLHttpRequest',
+					}),
+					integrity: 'hash',
+					keepalive: true,
+					method: 'POST',
+					mode: 'same-origin',
+					redirect: 'follow',
+					referrer: 'http://referrer.org',
+					signal: null,
+					window: null,
+				})))
 			})
 
 			describe('method', () => {
@@ -226,20 +224,19 @@ describe('retrieve', () => {
 					],
 				])('%s', async (_title, config) => {
 					expect.assertions(2)
-					vi.spyOn(globalThis, 'fetch').mockImplementation(async (...parameters) => {
-						expect(new Request(...parameters)).toMatchRequest(new Request(new URL('http://example.org'), {
-							method: 'GET',
-							headers: new Headers({
-								'x-requested-with': 'XMLHttpRequest',
-							}),
-						}))
-
+					const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
 						return new Response('OK')
 					})
 
 					await retrieve(config)
 
 					expect(fetch).toHaveBeenCalledTimes(1)
+					expect(spy).toHaveBeenCalledWith(expect.toMatchRequest(new Request(new URL('http://example.org'), {
+						method: 'GET',
+						headers: new Headers({
+							'x-requested-with': 'XMLHttpRequest',
+						}),
+					})))
 				})
 			})
 
@@ -414,15 +411,14 @@ describe('retrieve', () => {
 					],
 				])('%s', async (_title, config, expectedInit) => {
 					expect.assertions(2)
-					vi.spyOn(globalThis, 'fetch').mockImplementation(async (...parameters) => {
-						expect(new Request(...parameters)).toMatchRequest(new Request(new URL('http://example.org'), expectedInit))
-
+					const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
 						return new Response('OK')
 					})
 
 					await retrieve(config)
 
 					expect(fetch).toHaveBeenCalledTimes(1)
+					expect(spy).toHaveBeenCalledWith(expect.toMatchRequest(new Request(new URL('http://example.org'), expectedInit)))
 				})
 			})
 
@@ -526,15 +522,14 @@ describe('retrieve', () => {
 					],
 				])('%s', async (_title, config, expectedInit) => {
 					expect.assertions(2)
-					vi.spyOn(globalThis, 'fetch').mockImplementation(async (...parameters) => {
-						expect(new Request(...parameters)).toMatchRequest(new Request(new URL('http://example.org'), expectedInit))
-
+					const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
 						return new Response('OK')
 					})
 
 					await retrieve(config)
 
 					expect(fetch).toHaveBeenCalledTimes(1)
+					expect(spy).toHaveBeenCalledWith(expect.toMatchRequest(new Request(new URL('http://example.org'), expectedInit)))
 				})
 			})
 
@@ -933,15 +928,14 @@ describe('retrieve', () => {
 				],
 			])('handlers produce response', async (config, expectedInput, expectedInit) => {
 				expect.assertions(2)
-				vi.spyOn(globalThis, 'fetch').mockImplementation(async (...parameters) => {
-					expect(new Request(...parameters)).toMatchRequest(new Request(expectedInput, expectedInit))
-
+				const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
 					return new Response('OK')
 				})
 
 				await retrieve(config)
 
 				expect(fetch).toHaveBeenCalledTimes(1)
+				expect(spy).toHaveBeenCalledWith(expect.toMatchRequest(new Request(expectedInput, expectedInit)))
 			})
 
 			test.each<[RetrieveConfig]>([
