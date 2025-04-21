@@ -4,6 +4,12 @@ import { retrieve, type RetrieveConfig } from './retrieve.js'
 import { ResponseError } from './ResponseError.js'
 import { RetrieveResponse } from './RetrieveResponse.js'
 
+function createFetchMock (fetchMock: typeof globalThis.fetch) {
+	return vi.spyOn(globalThis, 'fetch').mockImplementation(async (...parameters) => {
+		return fetchMock(...parameters)
+	})
+}
+
 expect.extend({
 	toMatchRequest (received: Request, expected: Request) {
 		const { equals, isNot } = this
@@ -142,9 +148,7 @@ describe('retrieve', () => {
 				],
 			])('%s', async (_title, config, expectedInput) => {
 				expect.assertions(2)
-				const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
-					return new Response('OK')
-				})
+				const spy = createFetchMock(async () => new Response('OK'))
 
 				await retrieve(config)
 
@@ -161,9 +165,7 @@ describe('retrieve', () => {
 		describe('init', () => {
 			test('config.init parameters are passed to fetch', async () => {
 				expect.assertions(2)
-				const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
-					return new Response('OK')
-				})
+				const spy = createFetchMock(async () => new Response('OK'))
 
 				await retrieve({
 					url: 'http://example.org',
@@ -224,9 +226,7 @@ describe('retrieve', () => {
 					],
 				])('%s', async (_title, config) => {
 					expect.assertions(2)
-					const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
-						return new Response('OK')
-					})
+					const spy = createFetchMock(async () => new Response('OK'))
 
 					await retrieve(config)
 
@@ -411,9 +411,7 @@ describe('retrieve', () => {
 					],
 				])('%s', async (_title, config, expectedInit) => {
 					expect.assertions(2)
-					const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
-						return new Response('OK')
-					})
+					const spy = createFetchMock(async () => new Response('OK'))
 
 					await retrieve(config)
 
@@ -522,9 +520,7 @@ describe('retrieve', () => {
 					],
 				])('%s', async (_title, config, expectedInit) => {
 					expect.assertions(2)
-					const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
-						return new Response('OK')
-					})
+					const spy = createFetchMock(async () => new Response('OK'))
 
 					await retrieve(config)
 
@@ -558,7 +554,7 @@ describe('retrieve', () => {
 					const promise = new Promise<Response>((_resolve, _reject) => {
 						reject = _reject
 					})
-					vi.spyOn(globalThis, 'fetch').mockImplementation(async () => promise)
+					createFetchMock(() => promise)
 
 					// Fakes `AbortSignal.timeout` because it seems utterly unfazed by the fake timers meaning I can't speedrun it in the tests.
 					vi.spyOn(AbortSignal, 'timeout').mockImplementation((timeout) => {
@@ -614,7 +610,7 @@ describe('retrieve', () => {
 				],
 			])('%s', async (_title, fetchMock, config, expectedError) => {
 				expect.assertions(3)
-				const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(fetchMock)
+				const spy = createFetchMock(fetchMock)
 
 				try {
 					await retrieve(config)
@@ -714,7 +710,7 @@ describe('retrieve', () => {
 				],
 			])('handles content-type %s', async (_title, fetchMock, expectedData, expectedPartialResponse) => {
 				expect.assertions(2)
-				vi.spyOn(globalThis, 'fetch').mockImplementation(fetchMock)
+				createFetchMock(fetchMock)
 
 				const { data, response } = await retrieve({ url: 'http://example.org' })
 
@@ -746,7 +742,7 @@ describe('retrieve', () => {
 				vi.spyOn(Response.prototype, 'json').mockImplementation(() => {
 					throw new Error('Expected property name or \'}\' in JSON at position 1')
 				})
-				const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(fetchMock)
+				const spy = createFetchMock(fetchMock)
 
 				try {
 					await retrieve({ url: 'http://example.org' })
@@ -836,7 +832,7 @@ describe('retrieve', () => {
 				],
 			])('handles content-type %s', async (_title, fetchMock, expectedError, expectedData) => {
 				expect.assertions(4)
-				const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(fetchMock)
+				const spy = createFetchMock(fetchMock)
 
 				try {
 					await retrieve({ url: 'http://example.org' })
@@ -854,15 +850,13 @@ describe('retrieve', () => {
 				vi.spyOn(Response.prototype, 'json').mockImplementation(() => {
 					throw new SyntaxError('You messed up', { cause: 'badly' })
 				})
-				vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
-					return new Response('Oopsie!', {
-						status: 400,
-						statusText: 'Bad, bad request',
-						headers: {
-							'content-type': 'application/json',
-						},
-					})
-				})
+				createFetchMock(async () => new Response('Oopsie!', {
+					status: 400,
+					statusText: 'Bad, bad request',
+					headers: {
+						'content-type': 'application/json',
+					},
+				}))
 
 				try {
 					await retrieve({ url: 'http://example.org' })
@@ -878,9 +872,7 @@ describe('retrieve', () => {
 
 			test('response with no content-type is handled correctly', async () => {
 				expect.assertions(1)
-				vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
-					return new Response(null)
-				})
+				createFetchMock(async () => new Response(null))
 
 				const { data } = await retrieve({ url: 'http://example.org' })
 
@@ -928,9 +920,7 @@ describe('retrieve', () => {
 				],
 			])('handlers produce response', async (config, expectedInput, expectedInit) => {
 				expect.assertions(2)
-				const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
-					return new Response('OK')
-				})
+				const spy = createFetchMock(async () => new Response('OK'))
 
 				await retrieve(config)
 
@@ -951,9 +941,7 @@ describe('retrieve', () => {
 				],
 			])('skips calling fetch when returning response', async (config) => {
 				expect.assertions(1)
-				vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
-					return new Response('OK')
-				})
+				createFetchMock(async () => new Response('OK'))
 
 				await retrieve(config)
 
@@ -986,7 +974,7 @@ describe('retrieve', () => {
 				],
 			])('handlers produce error', async (config, expectedError) => {
 				expect.assertions(3)
-				const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+				const spy = createFetchMock(async () => {
 					throw new Error('Standard error')
 				})
 
@@ -1018,7 +1006,7 @@ describe('retrieve', () => {
 				],
 			])('handlers produce response', async (config, expectedData) => {
 				expect.assertions(1)
-				vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+				createFetchMock(async () => {
 					throw new Error('Standard error')
 				})
 
@@ -1041,7 +1029,7 @@ describe('retrieve', () => {
 				],
 			])('handlers raise exception on unknown error format', async (config, expectedError) => {
 				expect.assertions(1)
-				vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+				createFetchMock(async () => {
 					throw new Error('Standard error')
 				})
 
@@ -1082,9 +1070,7 @@ describe('retrieve', () => {
 				],
 			])('handlers produce response', async (config, expectedData) => {
 				expect.assertions(1)
-				vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
-					return new Response('OK')
-				})
+				createFetchMock(async () => new Response('OK'))
 
 				const { data } = await retrieve(config)
 
@@ -1108,9 +1094,7 @@ describe('retrieve', () => {
 				],
 			])('handlers produce error', async (config, expectedError) => {
 				expect.assertions(3)
-				const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
-					return new Response('Unauthorized', { status: 401 })
-				})
+				const spy = createFetchMock(async () => new Response('Unauthorized', { status: 401 }))
 
 				try {
 					await retrieve(config)
@@ -1155,9 +1139,7 @@ describe('retrieve', () => {
 				],
 			])('handlers produce response', async (config, expectedData) => {
 				expect.assertions(1)
-				vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
-					return new Response('Unauthorized', { status: 401 })
-				})
+				createFetchMock(async () => new Response('Unauthorized', { status: 401 }))
 
 				const { data } = await retrieve(config)
 
@@ -1178,9 +1160,7 @@ describe('retrieve', () => {
 				],
 			])('handlers raise exception on unknown error format', async (config, expectedError) => {
 				expect.assertions(1)
-				vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
-					return new Response('Unauthorized', { status: 401 })
-				})
+				createFetchMock(async () => new Response('Unauthorized', { status: 401 }))
 
 				const promise = retrieve(config)
 				await expect(promise).rejects.toThrowError(expectedError)
@@ -1209,15 +1189,13 @@ describe('retrieve', () => {
 
 			const expectedError = new ApiError('error message', 'error_code')
 
-			vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
-				return new Response('{"code":"error_code","message":"error message"}', {
-					status: 400,
-					statusText: 'Bad Request',
-					headers: {
-						'content-type': 'application/problem+json; charset=utf-8',
-					},
-				})
-			})
+			createFetchMock(async () => new Response('{"code":"error_code","message":"error message"}', {
+				status: 400,
+				statusText: 'Bad Request',
+				headers: {
+					'content-type': 'application/problem+json; charset=utf-8',
+				},
+			}))
 			const promise = retrieve({
 				url: 'http://api.example.org/status',
 				responseErrorHandlers: [
