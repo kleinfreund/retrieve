@@ -6,6 +6,13 @@ import { RetrieveResponse } from './RetrieveResponse.js'
 
 function createFetchMock (fetchMock: typeof globalThis.fetch) {
 	return vi.spyOn(globalThis, 'fetch').mockImplementation(async (...parameters) => {
+		// Node.js workaround: Ensure that the `Request`'s body is consumed even when mocking fetch. Otherwise, cloning but not consuming the `Request` right before passing it to fetch prevents retrieve from cancelling the original `Request` body stream to be cancelled.
+		if (parameters[0] instanceof Request) {
+			if (parameters[0].body) {
+				await parameters[0].arrayBuffer()
+			}
+		}
+
 		return fetchMock(...parameters)
 	})
 }
@@ -32,7 +39,6 @@ expect.extend({
  * Does not handle `body`.
  */
 function getRequestStructure ({
-	bodyUsed,
 	cache,
 	credentials,
 	destination,
@@ -53,7 +59,7 @@ function getRequestStructure ({
 	}
 
 	return {
-		bodyUsed,
+		bodyUsed: true,
 		cache,
 		credentials,
 		destination,
@@ -1164,6 +1170,36 @@ describe('retrieve', () => {
 
 				const promise = retrieve(config)
 				await expect(promise).rejects.toThrowError(expectedError)
+			})
+
+			test('retrying request using the same Request object can consume body repeatedly', async () => {
+				expect.assertions(1)
+				const spy = vi.spyOn(globalThis, 'fetch')
+					.mockImplementationOnce(async (request) => {
+						// Consume `request.body` so we can verify that consuming it a second time (e.g. by retrying the request in a response error handler) doesn't error.
+						await (request as Request).formData()
+						return new Response('Unauthorized', { status: 401 })
+					})
+					.mockImplementationOnce(async (request) => {
+						// Consume `Request.body` a second time.
+						await (request as Request).formData()
+						return new Response('Ok')
+					})
+
+				await retrieve({
+					url: 'http://example.org',
+					init: {
+						method: 'POST',
+						body: new FormData(),
+					},
+					responseErrorHandlers: [
+						(_error, retrieveResponse) => {
+							return retrieve(retrieveResponse.request)
+						},
+					],
+				})
+
+				expect(spy).toHaveBeenCalledTimes(2)
 			})
 		})
 	})

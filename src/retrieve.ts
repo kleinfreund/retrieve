@@ -289,13 +289,16 @@ export async function retrieve<Success = unknown, Failure = unknown> (configOrRe
 
 	try {
 		if (!(response instanceof Response)) {
-			response = await fetch(request)
+			// The only reason the `Request` object is being cloned here is so that a possible retry using that very same `Request` object can consume the request body twice.
+			response = await fetch(request.clone())
 		}
 	} catch (error) {
 		const result = await resolveRequestErrorHandlers(requestErrorHandlers, error, request, init)
 		if (result instanceof Response) {
 			response = result
 		} else {
+			await cancelRequestBody(request)
+
 			throw result
 		}
 	}
@@ -306,6 +309,8 @@ export async function retrieve<Success = unknown, Failure = unknown> (configOrRe
 	} else {
 		result = await resolveResponseErrorHandlers<Success, Failure>(responseErrorHandlers, response, request, init)
 	}
+
+	await cancelRequestBody(request)
 
 	if (result instanceof RetrieveResponse) {
 		return result
@@ -376,6 +381,15 @@ async function resolveResponseErrorHandlers<Success, Failure> (
 	}
 
 	return error
+}
+
+/**
+ * Cancel the body of the request (which we cloned in anticipation of possible retries) now that we know it won't be needed to avoid leaking memory.
+ */
+async function cancelRequestBody (request: Request) {
+	if (!request.bodyUsed && request.body) {
+		await request.body.cancel()
+	}
 }
 
 /**
