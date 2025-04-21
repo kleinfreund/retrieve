@@ -558,7 +558,7 @@ The request body is automatically serialized for JSON request bodies.
 
 ### Response body deserialization
 
-The response body is automatically deserialized for JSON, `FormData`, or text response bodies based on the response's content-type header. The deserialization happens on a _cloned_ `Response` object so that the body of the `Response` object included in `RetrieveResponse` and `RetrieveError` objects can be consumed again.
+The response body is automatically deserialized for JSON, `FormData`, or text response bodies based on the response's content-type header. The deserialization happens on a _cloned_ `Response` object so that the body of the `Response` object included in `RetrieveResponse` and `ResponseError` objects can be consumed again.
 
 ### Returning a rejecting promise for error responses
 
