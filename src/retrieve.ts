@@ -292,57 +292,90 @@ export async function retrieve<Success = unknown, Failure = unknown> (configOrRe
 			response = await fetch(request)
 		}
 	} catch (error) {
-		let requestError = createRequestError(error)
-
-		for (const requestErrorHandler of requestErrorHandlers) {
-			const result = await requestErrorHandler(requestError, request, init)
-			if (result instanceof Response) {
-				response = result
-				// At this point, the current request error handler has corrected the error state (by returning a new `Response` object) and no further request error handlers are processed.
-				break
-			} else {
-				requestError = result !== undefined ? result : requestError
-			}
+		const result = await resolveRequestErrorHandlers(requestErrorHandlers, error, request, init)
+		if (result instanceof Response) {
+			response = result
+		} else {
+			throw result
 		}
-
-		// If `response` isn't set here, the request error wasn't corrected and we can throw it.
-		if (response === undefined) {
-			throw requestError
-		}
-		// Conversely, `response` being set here is the signal for the request error to have been corrected by a request error handler and for retrieve to move on to processing the response as if no request error had occurred in the first place.
 	}
 
+	let result
 	if (response.ok) {
-		const data = await deserializeResponseBody(response) as Success
-		let retrieveSuccessResponse = new RetrieveResponse({ request, response, data })
-		for (const responseSuccessHandler of responseSuccessHandlers) {
-			const result = await responseSuccessHandler(retrieveSuccessResponse, init)
-			retrieveSuccessResponse = result !== undefined ? result : retrieveSuccessResponse
-		}
-
-		return retrieveSuccessResponse
+		result = await resolveResponseSuccessHandlers<Success>(responseSuccessHandlers, response, request, init)
+	} else {
+		result = await resolveResponseErrorHandlers<Success, Failure>(responseErrorHandlers, response, request, init)
 	}
 
-	const data = await deserializeResponseBody(response) as Failure
-	const retrieveErrorResponse = new RetrieveResponse({ request, response, data })
-	let error: Error = new ResponseError(retrieveErrorResponse)
+	if (result instanceof RetrieveResponse) {
+		return result
+	}
 
-	for (const responseErrorHandler of responseErrorHandlers) {
-		const result = await responseErrorHandler(error, retrieveErrorResponse, init)
+	throw result
+}
+
+async function resolveRequestErrorHandlers (
+	requestErrorHandlers: RequestErrorHandler[],
+	error: unknown,
+	request: Request,
+	init: NormalizedRequestInit,
+) {
+	let requestError = createRequestError(error)
+	for (const handler of requestErrorHandlers) {
+		const result = await handler(requestError, request, init)
+		if (result instanceof Response) {
+			return result
+			// At this point, the current request error handler has corrected the error state (by returning a new `Response` object) and no further request error handlers are processed.
+		} else {
+			requestError = result !== undefined ? result : requestError
+		}
+	}
+
+	return requestError
+}
+
+async function resolveResponseSuccessHandlers<Success> (
+	responseSuccessHandlers: ResponseSuccessHandler<Success>[],
+	response: Response,
+	request: Request,
+	init: NormalizedRequestInit,
+) {
+	const data = await deserializeResponseBody(response) as Success
+	let retrieveResponse = new RetrieveResponse({ request, response, data })
+	for (const handler of responseSuccessHandlers) {
+		const result = await handler(retrieveResponse, init)
+		retrieveResponse = result !== undefined ? result : retrieveResponse
+	}
+
+	return retrieveResponse
+}
+
+async function resolveResponseErrorHandlers<Success, Failure> (
+	responseErrorHandlers: ResponseErrorHandler<Success, Failure>[],
+	response: Response,
+	request: Request,
+	init: NormalizedRequestInit,
+) {
+	const data = await deserializeResponseBody(response) as Failure
+	const retrieveResponse = new RetrieveResponse({ request, response, data })
+	let error: Error = new ResponseError(retrieveResponse)
+	for (const handler of responseErrorHandlers) {
+		let result = await handler(error, retrieveResponse, init)
+
+		if (result instanceof Response) {
+			const data = await deserializeResponseBody(result) as Success
+			result = new RetrieveResponse({ request, response: result, data })
+		}
 
 		if (result instanceof RetrieveResponse) {
 			// At this point, the current response error handler has corrected the error state (by returning a `RetrieveResponse` object) and no further response error handlers are processed.
 			return result
-		} else if (result instanceof Response) {
-			// At this point, the current response error handler has corrected the error state (by returning a `Response` object) and no further response error handlers are processed.
-			const data = await deserializeResponseBody(result) as Success
-			return new RetrieveResponse({ request, response: result, data })
 		} else {
 			error = result !== undefined ? result : error
 		}
 	}
 
-	throw error
+	return error
 }
 
 /**
@@ -448,7 +481,7 @@ function createRequestError (error: unknown): Error {
 /**
  * Takes a `Response` object and deserializes its body (if set)
  */
-async function deserializeResponseBody (response: Response) {
+async function deserializeResponseBody (response: Response): Promise<unknown> {
 	const contentType = response.headers.get(CONTENT_TYPE) ?? ''
 	let bodyType: BodyType | undefined
 
