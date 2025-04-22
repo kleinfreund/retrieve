@@ -1,4 +1,4 @@
-declare class RetrieveResponse {
+declare class RetrieveResponse<Data = unknown> {
     /**
      * Original `Request` object passed to `fetch`.
      */
@@ -15,15 +15,15 @@ declare class RetrieveResponse {
      * - Response content type starts with “application/json” or “application/problem+json”: the response body is parsed as JSON (using `Response.prototype.json`).
      * - For everything else: the response body is parsed as text (using `Response.prototype.text`).
      */
-    data: unknown;
+    data: Data;
     constructor({ request, response, data }: {
         request: Request;
         response: Response;
-        data: unknown;
+        data: Data;
     });
 }
 
-interface RetrieveConfig {
+interface RetrieveConfig<Success = unknown, Failure = unknown> {
     /**
      * Request URL.
      *
@@ -165,7 +165,7 @@ interface RetrieveConfig {
      * }
      * ```
      */
-    responseSuccessHandlers?: ResponseSuccessHandler[];
+    responseSuccessHandlers?: ResponseSuccessHandler<Success>[];
     /**
      * Run when sending the request succeeded and a response with a status code >=300 was returned (i.e. the promise returned by `fetch` is fulfilled and yields a `Response` object whose `ok` property is set to `false`).
      *
@@ -211,7 +211,7 @@ interface RetrieveConfig {
      * }
      * ```
      */
-    responseErrorHandlers?: ResponseErrorHandler[];
+    responseErrorHandlers?: ResponseErrorHandler<Success, Failure>[];
 }
 interface NormalizedRequestInit extends RequestInit {
     method: string;
@@ -221,8 +221,8 @@ type OptionalPromise<T> = T | Promise<T>;
 type Interceptor<T extends (...args: any) => any> = ((...args: Parameters<T>) => OptionalPromise<ReturnType<T> | undefined>) | ((...args: Parameters<T>) => void);
 type BeforeRequestHandler = Interceptor<(request: Request, init: NormalizedRequestInit) => Response | Request>;
 type RequestErrorHandler = Interceptor<(error: Error, request: Request, init: NormalizedRequestInit) => Response | Error>;
-type ResponseSuccessHandler = Interceptor<(retrieveResponse: RetrieveResponse, init: NormalizedRequestInit) => RetrieveResponse>;
-type ResponseErrorHandler = Interceptor<(error: Error, retrieveResponse: RetrieveResponse, init: NormalizedRequestInit) => RetrieveResponse | Response | Error>;
+type ResponseSuccessHandler<Success> = Interceptor<(retrieveResponse: RetrieveResponse<Success>, init: NormalizedRequestInit) => RetrieveResponse<Success>>;
+type ResponseErrorHandler<Success, Failure> = Interceptor<(error: Error, retrieveResponse: RetrieveResponse<Failure>, init: NormalizedRequestInit) => RetrieveResponse<Success> | Response | Error>;
 /**
  * Takes a `RetrieveConfig` or `Request` object and makes a network request using `fetch`.
  *
@@ -230,14 +230,14 @@ type ResponseErrorHandler = Interceptor<(error: Error, retrieveResponse: Retriev
  *
  * When providing a `Request` object, no preprocessing steps are performed and no interceptors are executed. The `Request` is passed to `fetch` directly. This is primarily intended for retrying requests inside `config.responseErrorHandlers`.
  */
-declare function retrieve(configOrRequest: RetrieveConfig | Request): Promise<RetrieveResponse>;
+declare function retrieve<Success = unknown, Failure = unknown>(configOrRequest: RetrieveConfig<Success, Failure> | Request): Promise<RetrieveResponse<Success>>;
 
-declare class ResponseError extends Error {
+declare class ResponseError<Data = unknown> extends Error {
     name: string;
-    request: RetrieveResponse['request'];
-    response: RetrieveResponse['response'];
-    data: RetrieveResponse['data'];
-    constructor({ request, response, data }: RetrieveResponse, error?: Error);
+    request: RetrieveResponse<Data>['request'];
+    response: RetrieveResponse<Data>['response'];
+    data: RetrieveResponse<Data>['data'];
+    constructor({ request, response, data }: RetrieveResponse<Data>, error?: Error);
     toJSON(): {
         name: string;
         message: string;
