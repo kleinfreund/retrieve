@@ -3,47 +3,19 @@ import { ResponseError } from './ResponseError.js'
 
 describe('ResponseError', () => {
 	test('has the expected data', () => {
-		expect.assertions(4)
+		expect.assertions(5)
 		const request = new Request('http://example.org')
-		const response = new Response()
+		const response = new Response(undefined, { status: 400, statusText: 'Bad Request' })
 		const data = null
-		const error = new Error('Error message')
-		const responseError = new ResponseError({ request, response, data }, error)
+		const responseError = new ResponseError({ request, response, data })
 
+		expect(responseError.message).toBe('Request “GET http://example.org/” failed with status code 400 Bad Request')
 		expect(responseError.request).toBe(request)
 		expect(responseError.response).toBe(response)
 		expect(responseError.data).toBe(data)
 		expect(responseError.toJSON()).toEqual({
 			name: 'ResponseError',
-			message: 'Error message',
+			message: 'Request “GET http://example.org/” failed with status code 400 Bad Request',
 		})
-	})
-
-	test.each([
-		[
-			undefined,
-			'Request “GET http://example.org/” failed with status code 400 Bad Request',
-		],
-		[
-			new Error(),
-			'Request “GET http://example.org/” failed with status code 400 Bad Request',
-		],
-		[
-			new Error(''),
-			'Request “GET http://example.org/” failed with status code 400 Bad Request',
-		],
-		[
-			new Error('Error message'),
-			'Error message',
-		],
-	])('has the expected message', (error, expectedMessage) => {
-		expect.assertions(1)
-		const responseError = new ResponseError({
-			request: new Request('http://example.org'),
-			response: new Response(undefined, { status: 400, statusText: 'Bad Request' }),
-			data: null,
-		}, error)
-
-		expect(responseError.message).toBe(expectedMessage)
 	})
 })

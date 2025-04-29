@@ -6,15 +6,10 @@ export class ResponseError<Data = unknown> extends Error {
 	response: RetrieveResponse<Data>['response']
 	data: RetrieveResponse<Data>['data']
 
-	constructor ({ request, response, data }: RetrieveResponse<Data>, error?: Error) {
-		let message
-		if (error?.message) {
-			message = error.message
-		} else {
-			const status = `${response.status} ${response.statusText}`.trim()
-			message = `Request “${request.method} ${request.url}” failed with status code ${status}`
-		}
-		super(message, error?.cause ? { cause: error.cause } : undefined)
+	constructor ({ request, response, data }: RetrieveResponse<Data>) {
+		const status = `${response.status} ${response.statusText}`.trim()
+		const message = `Request “${request.method} ${request.url}” failed with status code ${status}`
+		super(message)
 
 		this.request = request
 		this.response = response
