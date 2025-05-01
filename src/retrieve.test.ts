@@ -372,14 +372,14 @@ describe('retrieve', () => {
 						{
 							url: 'http://example.org',
 							init: {
-								headers: [['content-type', 'plain/text']],
+								headers: [['content-type', 'text/plain']],
 							},
 						},
 						{
 							method: 'GET',
 							headers: new Headers({
 								'x-requested-with': 'XMLHttpRequest',
-								'content-type': 'plain/text',
+								'content-type': 'text/plain',
 							}),
 						},
 					],
@@ -388,14 +388,14 @@ describe('retrieve', () => {
 						{
 							url: 'http://example.org',
 							init: {
-								headers: { 'content-type': 'plain/text' },
+								headers: { 'content-type': 'text/plain' },
 							},
 						},
 						{
 							method: 'GET',
 							headers: new Headers({
 								'x-requested-with': 'XMLHttpRequest',
-								'content-type': 'plain/text',
+								'content-type': 'text/plain',
 							}),
 						},
 					],
@@ -404,14 +404,14 @@ describe('retrieve', () => {
 						{
 							url: 'http://example.org',
 							init: {
-								headers: new Headers({ 'content-type': 'plain/text' }),
+								headers: new Headers({ 'content-type': 'text/plain' }),
 							},
 						},
 						{
 							method: 'GET',
 							headers: new Headers({
 								'x-requested-with': 'XMLHttpRequest',
-								'content-type': 'plain/text',
+								'content-type': 'text/plain',
 							}),
 						},
 					],
@@ -492,7 +492,7 @@ describe('retrieve', () => {
 							url: 'http://example.org',
 							init: {
 								method: 'POST',
-								headers: new Headers({ 'content-type': 'plain/text' }),
+								headers: new Headers({ 'content-type': 'text/plain' }),
 							},
 							data: 'Hello, server!',
 						},
@@ -500,7 +500,7 @@ describe('retrieve', () => {
 							method: 'POST',
 							headers: new Headers({
 								'x-requested-with': 'XMLHttpRequest',
-								'content-type': 'plain/text',
+								'content-type': 'text/plain',
 							}),
 							body: 'Hello, server!',
 						},
@@ -511,7 +511,7 @@ describe('retrieve', () => {
 							url: 'http://example.org',
 							init: {
 								method: 'POST',
-								headers: new Headers({ 'content-type': 'plain/text' }),
+								headers: new Headers({ 'content-type': 'text/plain' }),
 								body: 'Hello, server!',
 							},
 						},
@@ -519,7 +519,7 @@ describe('retrieve', () => {
 							method: 'POST',
 							headers: new Headers({
 								'x-requested-with': 'XMLHttpRequest',
-								'content-type': 'plain/text',
+								'content-type': 'text/plain',
 							}),
 							body: 'Hello, server!',
 						},
@@ -676,13 +676,13 @@ describe('retrieve', () => {
 					},
 				],
 				[
-					'plain/text',
+					'text/plain',
 					async () => {
 						return new Response('OK', {
 							status: 200,
 							statusText: 'Super duper!',
 							headers: {
-								'content-type': 'plain/text',
+								'content-type': 'text/plain',
 							},
 						})
 					},
@@ -771,13 +771,13 @@ describe('retrieve', () => {
 					null,
 				],
 				[
-					'plain/text',
+					'text/plain',
 					async () => {
 						return new Response('Oopsie!', {
 							status: 400,
 							statusText: 'Bad Request',
 							headers: {
-								'content-type': 'plain/text',
+								'content-type': 'text/plain',
 							},
 						})
 					},
@@ -988,7 +988,7 @@ describe('retrieve', () => {
 							() => {
 								return new Response('Hell yeah!', {
 									headers: {
-										'content-type': 'plain/text',
+										'content-type': 'text/plain',
 									},
 								})
 							},
@@ -1101,7 +1101,7 @@ describe('retrieve', () => {
 							() => {
 								return new Response('Hell yeah!', {
 									headers: {
-										'content-type': 'plain/text',
+										'content-type': 'text/plain',
 									},
 								})
 							},

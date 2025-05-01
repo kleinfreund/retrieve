@@ -34,7 +34,7 @@ export interface RetrieveConfig<Success = unknown, Failure = unknown> {
 	 * - **Headers**: If no “content-type” header is set, it is determined automatically where appropriate:
 	 *
 	 *   - “application/octet-stream” if `config.data` is an `ArrayBuffer` of `Blob` object
-	 *   - “plain/text” if `config.data` is a string
+	 *   - “text/plain” if `config.data` is a string
 	 *   - “application/json” if `config.data` is set and the request method isn't GET or HEAD
 	 *
 	 *   Note, that if `config.data` is set to a `FormData` object, an existing content type **will be removed**. Read the warning on [MDN: Using FormData Objects: Sending files using a FormData object](https://developer.mozilla.org/en-US/docs/Web/API/FormData/Using_FormData_Objects#sending_files_using_a_formdata_object) for an explanation.
@@ -231,7 +231,7 @@ const CONTENT_TYPE_FORM_DATA = 'multipart/form-data'
 const CONTENT_TYPE_JSON = 'application/json'
 const CONTENT_TYPE_JSON_PROBLEM = 'application/problem+json'
 const CONTENT_TYPE_OCTET_STREAM = 'application/octet-stream'
-const CONTENT_TYPE_TEXT = 'plain/text'
+const CONTENT_TYPE_TEXT = 'text/plain'
 
 const CONTENT_TYPES: Record<BodyType, string> = {
 	arrayBuffer: CONTENT_TYPE_OCTET_STREAM,
