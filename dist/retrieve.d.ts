@@ -23,6 +23,18 @@ declare class RetrieveResponse<Data = unknown> {
     });
 }
 
+declare class ResponseError<Data = unknown> extends Error {
+    name: string;
+    request: RetrieveResponse<Data>['request'];
+    response: RetrieveResponse<Data>['response'];
+    data: RetrieveResponse<Data>['data'];
+    constructor({ request, response, data }: RetrieveResponse<Data>);
+    toJSON(): {
+        name: string;
+        message: string;
+    };
+}
+
 interface RetrieveConfig<Success = unknown, Failure = unknown> {
     /**
      * Request URL.
@@ -53,7 +65,7 @@ interface RetrieveConfig<Success = unknown, Failure = unknown> {
      * - **Headers**: If no “content-type” header is set, it is determined automatically where appropriate:
      *
      *   - “application/octet-stream” if `config.data` is an `ArrayBuffer` of `Blob` object
-     *   - “plain/text” if `config.data` is a string
+     *   - “text/plain” if `config.data` is a string
      *   - “application/json” if `config.data` is set and the request method isn't GET or HEAD
      *
      *   Note, that if `config.data` is set to a `FormData` object, an existing content type **will be removed**. Read the warning on [MDN: Using FormData Objects: Sending files using a FormData object](https://developer.mozilla.org/en-US/docs/Web/API/FormData/Using_FormData_Objects#sending_files_using_a_formdata_object) for an explanation.
@@ -222,7 +234,7 @@ type Interceptor<T extends (...args: any) => any> = ((...args: Parameters<T>) =>
 type BeforeRequestHandler = Interceptor<(request: Request, init: NormalizedRequestInit) => Response | Request>;
 type RequestErrorHandler = Interceptor<(error: Error, request: Request, init: NormalizedRequestInit) => Response | Error>;
 type ResponseSuccessHandler<Success> = Interceptor<(retrieveResponse: RetrieveResponse<Success>, init: NormalizedRequestInit) => RetrieveResponse<Success>>;
-type ResponseErrorHandler<Success, Failure> = Interceptor<(error: Error, retrieveResponse: RetrieveResponse<Failure>, init: NormalizedRequestInit) => RetrieveResponse<Success> | Response | Error>;
+type ResponseErrorHandler<Success, Failure> = Interceptor<(error: ResponseError<Failure>, retrieveResponse: RetrieveResponse<Failure>, init: NormalizedRequestInit) => RetrieveResponse<Success> | Response | ResponseError<Failure>>;
 /**
  * Takes a `RetrieveConfig` or `Request` object and makes a network request using `fetch`.
  *
@@ -230,18 +242,6 @@ type ResponseErrorHandler<Success, Failure> = Interceptor<(error: Error, retriev
  *
  * When providing a `Request` object, no preprocessing steps are performed and no interceptors are executed. The `Request` is passed to `fetch` directly. This is primarily intended for retrying requests inside `config.responseErrorHandlers`.
  */
-declare function retrieve<Success = unknown, Failure = unknown>(configOrRequest: RetrieveConfig<Success, Failure> | Request): Promise<RetrieveResponse<Success>>;
-
-declare class ResponseError<Data = unknown> extends Error {
-    name: string;
-    request: RetrieveResponse<Data>['request'];
-    response: RetrieveResponse<Data>['response'];
-    data: RetrieveResponse<Data>['data'];
-    constructor({ request, response, data }: RetrieveResponse<Data>, error?: Error);
-    toJSON(): {
-        name: string;
-        message: string;
-    };
-}
+declare function retrieve<Success = unknown, Failure = unknown>(configOrRequest: RetrieveConfig<Success, Failure> | Request): Promise<RetrieveResponse<Success> | ResponseError<Failure>>;
 
 export { type BeforeRequestHandler, type RequestErrorHandler, ResponseError, type ResponseErrorHandler, type ResponseSuccessHandler, type RetrieveConfig, RetrieveResponse, retrieve };
