@@ -33,7 +33,7 @@ export interface RetrieveConfig<Success = unknown, Failure = unknown> {
 	 *
 	 * - **Headers**: If no “content-type” header is set, it is determined automatically where appropriate:
 	 *
-	 *   - “application/octet-stream” if `config.data` is an `ArrayBuffer` of `Blob` object
+	 *   - “application/octet-stream” if `config.data` is an `ArrayBuffer` or `Blob` object
 	 *   - “text/plain” if `config.data` is a string
 	 *   - “application/json” if `config.data` is set and the request method isn't GET or HEAD
 	 *

@@ -498,9 +498,9 @@ form.addEventListener('submit', function (event) {
 
 ### Request content type guessing
 
-The content type for the request is guessed based on the request body format (if one isn't set already).
+The content type header for the request is guessed based on the request body format (if a content type header isn't set already).
 
-- `application/octet-stream` if `config.data` is an `ArrayBuffer` of `Blob` object
+- `application/octet-stream` if `config.data` is an `ArrayBuffer` or `Blob` object
 - `text/plain` if `config.data` is a string
 - `application/json` if `config.data` is set and the request method isn't GET or HEAD
 
