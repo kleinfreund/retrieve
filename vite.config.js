@@ -9,5 +9,6 @@ export default defineConfig({
 			include: ['src'],
 		},
 		reporters: 'verbose',
+		globalSetup: 'vitest.global-setup.ts',
 	},
 })
