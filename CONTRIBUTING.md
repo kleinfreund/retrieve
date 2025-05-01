@@ -9,8 +9,8 @@ This project follows a [code of conduct](https://github.com/kleinfreund/retrieve
 The following software will be required to contribute to this project:
 
 - git
-- Node.js (version 22.12.0 or higher)
-- npm (version 10 or higher)
+- Node.js (see `.nvmrc` file)
+- npm
 
 ## Development
 
