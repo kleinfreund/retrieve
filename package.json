@@ -37,9 +37,9 @@
 	"scripts": {
 		"build": "tsup",
 		"start": "vite",
-		"test": "run-s test:browser test:node",
-		"test:browser": "vitest run --coverage --environment jsdom",
-		"test:browser:watch": "vitest --environment jsdom",
+		"test": "run-s test:jsdom test:node",
+		"test:jsdom": "vitest run --coverage --environment jsdom",
+		"test:jsdom:watch": "vitest --environment jsdom",
 		"test:node": "vitest run --coverage --environment node",
 		"test:node:watch": "vitest --environment node",
 		"lint": "run-p lint:*",
