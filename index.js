@@ -1,8 +1,9 @@
-import { retrieve, ResponseError } from './dist/retrieve.js'
+import { retrieve, ResponseError, RetrieveResponse } from './dist/retrieve.js'
 /** @import { RetrieveConfig } from './src/retrieve.js' */
 
 Object.defineProperty(window, 'retrieve', { value: retrieve })
 Object.defineProperty(window, 'ResponseError', { value: ResponseError })
+Object.defineProperty(window, 'RetrieveResponse', { value: RetrieveResponse })
 
 const forms = Array.from(document.forms)
 
@@ -16,7 +17,7 @@ async function handleGetSubmit (event) {
 	event.preventDefault()
 
 	const form = /** @type {HTMLFormElement} */ (event.target)
-	console.log(form)
+	console.log({ form })
 
 	/** @type {RetrieveConfig} */ const config = {
 		url: form.action,
@@ -25,20 +26,17 @@ async function handleGetSubmit (event) {
 			method: form.method,
 		},
 	}
-	console.log(config)
+	console.log({ config })
 
-	try {
-		await retrieve(config)
-	} catch (error) {
-		console.dir(error)
-	}
+	const result = await retrieve(config)
+	console.dir(result)
 }
 
 async function handlePostSubmit (event) {
 	event.preventDefault()
 
 	const form = /** @type {HTMLFormElement} */ (event.target)
-	console.log(form)
+	console.log({ form })
 
 	/** @type {RetrieveConfig} */ const config = {
 		url: form.action,
@@ -47,11 +45,8 @@ async function handlePostSubmit (event) {
 			method: form.method,
 		},
 	}
-	console.log(config)
+	console.log({ config })
 
-	try {
-		await retrieve(config)
-	} catch (error) {
-		console.dir(error)
-	}
+	const result = await retrieve(config)
+	console.dir(result)
 }

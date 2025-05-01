@@ -222,7 +222,7 @@ export type RequestErrorHandler = Interceptor<(error: Error, request: Request, i
 
 export type ResponseSuccessHandler<Success> = Interceptor<(retrieveResponse: RetrieveResponse<Success>, init: NormalizedRequestInit) => RetrieveResponse<Success>>
 
-export type ResponseErrorHandler<Success, Failure> = Interceptor<(error: Error, retrieveResponse: RetrieveResponse<Failure>, init: NormalizedRequestInit) => RetrieveResponse<Success> | Response | Error>
+export type ResponseErrorHandler<Success, Failure> = Interceptor<(error: ResponseError<Failure>, retrieveResponse: RetrieveResponse<Failure>, init: NormalizedRequestInit) => RetrieveResponse<Success> | Response | ResponseError<Failure>>
 
 type BodyType = 'arrayBuffer' | 'blob' | 'formData' | 'json' | 'text'
 
@@ -248,7 +248,7 @@ const CONTENT_TYPES: Record<BodyType, string> = {
  *
  * When providing a `Request` object, no preprocessing steps are performed and no interceptors are executed. The `Request` is passed to `fetch` directly. This is primarily intended for retrying requests inside `config.responseErrorHandlers`.
  */
-export async function retrieve<Success = unknown, Failure = unknown> (configOrRequest: RetrieveConfig<Success, Failure> | Request): Promise<RetrieveResponse<Success>> {
+export async function retrieve<Success = unknown, Failure = unknown> (configOrRequest: RetrieveConfig<Success, Failure> | Request): Promise<RetrieveResponse<Success> | ResponseError<Failure>> {
 	let beforeRequestHandlers: BeforeRequestHandler[]
 	let requestErrorHandlers: RequestErrorHandler[]
 	let responseSuccessHandlers: ResponseSuccessHandler<Success>[]
@@ -298,7 +298,6 @@ export async function retrieve<Success = unknown, Failure = unknown> (configOrRe
 			response = result
 		} else {
 			await cancelRequestBody(request)
-
 			throw result
 		}
 	}
@@ -311,12 +310,7 @@ export async function retrieve<Success = unknown, Failure = unknown> (configOrRe
 	}
 
 	await cancelRequestBody(request)
-
-	if (result instanceof RetrieveResponse) {
-		return result
-	}
-
-	throw result
+	return result
 }
 
 async function resolveRequestErrorHandlers (
@@ -363,7 +357,7 @@ async function resolveResponseErrorHandlers<Success, Failure> (
 ) {
 	const data = await deserializeResponseBody(response) as Failure
 	const retrieveResponse = new RetrieveResponse({ request, response, data })
-	let error: Error = new ResponseError(retrieveResponse)
+	let error = new ResponseError(retrieveResponse)
 	for (const handler of responseErrorHandlers) {
 		let result = await handler(error, retrieveResponse, init)
 

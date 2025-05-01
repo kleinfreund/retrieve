@@ -19,7 +19,7 @@ This package’s files are distributed in the ES module format and have not been
 - [sets the right “content-type” header based on the request body format](#request-content-type-guessing)
 - [serializes request bodies (JSON)](#request-body-serialization)
 - [deserializes response bodies (JSON, FormData, text)](#response-body-deserialization)
-- [returns a rejecting promise with a `ResponseError` for error responses](#returning-a-rejecting-promise-for-error-responses)
+- [allows typing deserialization result for successful and failed responses](#typing-response-data)
 - [supports interceptors that can implement error correcting logic](#interceptors)
 
 Why is it called `retrieve`? I wanted to call it `makeRequest` (I like clean and explicit names), but that already exists on npm. So I went with `retrieve` because that's similar to `fetch`.
@@ -46,7 +46,6 @@ Why is it called `retrieve`? I wanted to call it `makeRequest` (I like clean and
 	- [Return value](#return-value)
 	- [Exceptions](#exceptions)
 		- [`TypeError`](#typeerror)
-		- [`ResponseError`](#responseerror)
 - [Examples](#examples)
 	- [Example 1: make simple API request](#example-1-make-simple-api-request)
 	- [Example 2: use response error](#example-2-use-response-error)
@@ -57,7 +56,7 @@ Why is it called `retrieve`? I wanted to call it `makeRequest` (I like clean and
 	- [Request content type guessing](#request-content-type-guessing)
 	- [Request body serialization](#request-body-serialization)
 	- [Response body deserialization](#response-body-deserialization)
-	- [Returning a rejecting promise for error responses](#returning-a-rejecting-promise-for-error-responses)
+	- [Typing response data](#typing-response-data)
 	- [Interceptors](#interceptors)
 - [Versioning](#versioning)
 
@@ -107,6 +106,25 @@ Basic usage of `retrieve` looks like this:
 const { data } = await retrieve({
 	url: 'https://pokeapi.co/api/v2/pokemon',
 })
+```
+
+With error handling and types:
+
+```ts
+type Pokemon = { id: number, name: string }
+type ApiError = string
+
+const result = await retrieve<Pokemon, ApiError>({
+	url: 'https://pokeapi.co/api/v2/pokemon/25',
+})
+
+if (result instanceof ResponseError) {
+	console.error(result.data)
+	//                   ^^^^ ApiError
+} else {
+	console.dir(result.data)
+	//                 ^^^^ Pokemon
+}
 ```
 
 ### Parameters
@@ -316,17 +334,7 @@ When providing a `Request` object (instead of a `RetrieveConfig` object) to `ret
 
 ### Return value
 
-A `Promise` that resolves to a `RetrieveResponse` object.
-
-### Exceptions
-
-#### `TypeError`
-
-A `TypeError` is thrown when `fetch` does (see [fetch() global function: Exceptions](https://developer.mozilla.org/en-US/docs/Web/API/fetch#exceptions)).
-
-#### `ResponseError`
-
-A `ResponseError` is thrown for `fetch` responses with a status code >=300.
+A `Promise` that fulfills with a `RetrieveResponse` object for successful responses (status code 200–299) or a `ResponseError` object for failed responses (status code >=300).
 
 A `ResponseError` has access to:
 
@@ -335,18 +343,21 @@ A `ResponseError` has access to:
 - `data`: the deserialized response body contents
 
 ```js
-try {
-	await retrieve({
-		url: 'https://pokeapi.co/api/v2/pokemon/grogu/',
-	})
-} catch (error) {
-	if (error instanceof ResponseError) {
-		console.log(error.response, error.data)
-	}
+const result = await retrieve({
+	url: 'https://pokeapi.co/api/v2/pokemon/grogu/',
+})
+if (result instanceof ResponseError) {
+	console.error(result.response, result.data)
+} else {
+	console.log(result.response, result.data)
 }
 ```
 
-Note, that using `config.responseErrorHandlers` might change the thrown value from a `ResponseError` object to a plain `Error` object (or technically anything returned by a response error handler that's not a `Response` object). It's up to you.
+### Exceptions
+
+#### `TypeError`
+
+A `TypeError` is thrown when `fetch` does (see [fetch() global function: Exceptions](https://developer.mozilla.org/en-US/docs/Web/API/fetch#exceptions)).
 
 ## Examples
 
@@ -367,15 +378,12 @@ example()
 
 ```js
 async function example() {
-	try {
-		await retrieve({
-			url: 'https://pokeapi.co/api/v2/pokemon/grogu/',
-		})
-	} catch (error) {
-		console.dir(error)
-		if (error instanceof ResponseError) {
-			console.log(error.data)
-		}
+	const result = await retrieve({
+		url: 'https://pokeapi.co/api/v2/pokemon/grogu/',
+	})
+	console.dir(result)
+	if (result instanceof ResponseError) {
+		console.log(result.data)
 	}
 }
 
@@ -486,62 +494,6 @@ form.addEventListener('submit', function (event) {
 })
 ```
 
-### Example 6: transforming response error
-
-Use a response error handler to transform a well-defined error format on your API responses into a custom API error class.
-
-```js
-class ApiError extends Error {
-	code = null
-
-	constructor(message, code = null) {
-		super(message)
-		this.code = code
-	}
-
-	toJSON() {
-		return {
-			code: this.code,
-			message: this.message,
-		}
-	}
-}
-
-async function example() {
-	try {
-		await retrieve({
-			url: 'http://api.example.org/status',
-			responseErrorHandlers: [
-				(error, { data }) => {
-					let message = error.message
-					let code = null
-
-					if (data && typeof data === 'object') {
-						if ('message' in data && typeof data.message === 'string') {
-							message = data.message
-						}
-
-						if ('code' in data && typeof data.code === 'string') {
-							code = data.code
-						}
-					}
-
-					return new ApiError(message, code)
-				},
-			],
-		})
-	} catch (error) {
-		if (error instanceof ApiError) {
-			console.error(`${error.code}: ${error.message}`)
-		} else {
-			console.error(error)
-		}
-	}
-}
-
-example()
-```
-
 ## Features
 
 ### Request content type guessing
@@ -560,9 +512,9 @@ The request body is automatically serialized for JSON request bodies.
 
 The response body is automatically deserialized for JSON, `FormData`, or text response bodies based on the response's content-type header. The deserialization happens on a _cloned_ `Response` object so that the body of the `Response` object included in `RetrieveResponse` and `ResponseError` objects can be consumed again.
 
-### Returning a rejecting promise for error responses
+### Typing response data
 
-In case of receiving a response with a status code >=300 from the underlying `fetch` call, `retrieve` will return a rejecting promise (with a `ResponseError`). The behavior of `fetch` is to return a resolving promise (with a `Response` which has an `ok` property set to `false`) instead.
+When using TypeScript, types for the deserialized response body can be provided via type parameters when calling `retrieve`. Two type parameters can be provided: one for the data if the response was successful (status code 200-299); one for the data if the response wasn't successful (status code >=300)
 
 ### Interceptors
 

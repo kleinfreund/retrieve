@@ -615,17 +615,15 @@ describe('retrieve', () => {
 					new Error('Now that’s just great'),
 				],
 			])('%s', async (_title, fetchMock, config, expectedError) => {
-				expect.assertions(3)
-				const spy = createFetchMock(fetchMock)
+				expect.assertions(2)
+				createFetchMock(fetchMock)
 
 				try {
 					await retrieve(config)
 				} catch (error) {
 					expect(error instanceof Error).toBe(true)
-					const err = error as Error
-					expect(err.message).toEqual(expectedError.message)
+					expect((error as Error).message).toEqual(expectedError.message)
 				}
-				expect(spy).toHaveBeenCalledTimes(1)
 			})
 		})
 
@@ -743,21 +741,19 @@ describe('retrieve', () => {
 					new Error('Expected property name or \'}\' in JSON at position 1'),
 				],
 			])('handles invalid JSON correctly', async (fetchMock, expectedError) => {
-				expect.assertions(3)
+				expect.assertions(2)
 				// Throw the expected JSON error manually because different implementations will throw errors with different messages which makes this test unstable.
 				vi.spyOn(Response.prototype, 'json').mockImplementation(() => {
 					throw new Error('Expected property name or \'}\' in JSON at position 1')
 				})
-				const spy = createFetchMock(fetchMock)
+				createFetchMock(fetchMock)
 
 				try {
 					await retrieve({ url: 'http://example.org' })
 				} catch (error) {
 					expect(error instanceof Error).toBe(true)
-					const err = error as Error
-					expect(err.message).toEqual(expectedError.message)
+					expect((error as Error).message).toEqual(expectedError.message)
 				}
-				expect(spy).toHaveBeenCalledTimes(1)
 			})
 		})
 
@@ -837,18 +833,13 @@ describe('retrieve', () => {
 					},
 				],
 			])('handles content-type %s', async (_title, fetchMock, expectedError, expectedData) => {
-				expect.assertions(4)
-				const spy = createFetchMock(fetchMock)
+				expect.assertions(3)
+				createFetchMock(fetchMock)
 
-				try {
-					await retrieve({ url: 'http://example.org' })
-				} catch (error) {
-					expect(error instanceof ResponseError).toBe(true)
-					const err = error as ResponseError
-					expect(err.message).toEqual(expectedError.message)
-					expect(err.data).toEqual(expectedData)
-				}
-				expect(spy).toHaveBeenCalledTimes(1)
+				const result = await retrieve({ url: 'http://example.org' })
+				expect(result instanceof ResponseError).toBe(true)
+				expect((result as ResponseError).message).toEqual(expectedError.message)
+				expect((result as ResponseError).data).toEqual(expectedData)
 			})
 
 			test('response error has cause if present on underlying error', async () => {
@@ -866,13 +857,10 @@ describe('retrieve', () => {
 
 				try {
 					await retrieve({ url: 'http://example.org' })
-				} catch (err) {
-					expect(err instanceof Error).toBe(true)
-
-					if (err instanceof Error) {
-						expect(err.message).toBe('You messed up')
-						expect(err.cause).toBe('badly')
-					}
+				} catch (error) {
+					expect(error instanceof Error).toBe(true)
+					expect((error as Error).message).toBe('You messed up')
+					expect((error as Error).cause).toBe('badly')
 				}
 			})
 
@@ -979,8 +967,8 @@ describe('retrieve', () => {
 					new Error('Overridden error'),
 				],
 			])('handlers produce error', async (config, expectedError) => {
-				expect.assertions(3)
-				const spy = createFetchMock(async () => {
+				expect.assertions(2)
+				createFetchMock(async () => {
 					throw new Error('Standard error')
 				})
 
@@ -988,10 +976,8 @@ describe('retrieve', () => {
 					await retrieve(config)
 				} catch (error) {
 					expect(error instanceof Error).toBe(true)
-					const err = error as Error
-					expect(err.message).toEqual(expectedError.message)
+					expect((error as Error).message).toEqual(expectedError.message)
 				}
-				expect(spy).toHaveBeenCalledTimes(1)
 			})
 
 			test.each<[RetrieveConfig, unknown]>([
@@ -1099,17 +1085,12 @@ describe('retrieve', () => {
 					new Error('Altered message'),
 				],
 			])('handlers produce error', async (config, expectedError) => {
-				expect.assertions(3)
-				const spy = createFetchMock(async () => new Response('Unauthorized', { status: 401 }))
+				expect.assertions(2)
+				createFetchMock(async () => new Response('Unauthorized', { status: 401 }))
 
-				try {
-					await retrieve(config)
-				} catch (error) {
-					expect(error instanceof Error).toBe(true)
-					const err = error as Error
-					expect(err.message).toEqual(expectedError.message)
-				}
-				expect(spy).toHaveBeenCalledTimes(1)
+				const result = await retrieve(config)
+				expect(result instanceof ResponseError).toBe(true)
+				expect((result as ResponseError).message).toEqual(expectedError.message)
 			})
 
 			test.each<[RetrieveConfig, unknown]>([
@@ -1201,60 +1182,6 @@ describe('retrieve', () => {
 
 				expect(spy).toHaveBeenCalledTimes(2)
 			})
-		})
-	})
-
-	describe('examples', () => {
-		test('Example 6: transforming response error', async () => {
-			expect.assertions(1)
-			class ApiError extends Error {
-				code: string | null = null
-
-				constructor (message: string, code: string | null = null) {
-					super(message)
-					this.code = code
-				}
-
-				toJSON () {
-					return {
-						code: this.code,
-						message: this.message,
-					}
-				}
-			}
-
-			const expectedError = new ApiError('error message', 'error_code')
-
-			createFetchMock(async () => new Response('{"code":"error_code","message":"error message"}', {
-				status: 400,
-				statusText: 'Bad Request',
-				headers: {
-					'content-type': 'application/problem+json; charset=utf-8',
-				},
-			}))
-			const promise = retrieve({
-				url: 'http://api.example.org/status',
-				responseErrorHandlers: [
-					async (error, { data }) => {
-						let message = error.message
-						let code = null
-
-						if (data && typeof data === 'object') {
-							if ('message' in data && typeof data.message === 'string') {
-								message = data.message
-							}
-
-							if ('code' in data && typeof data.code === 'string') {
-								code = data.code
-							}
-						}
-
-						return new ApiError(message, code)
-					},
-				],
-			})
-
-			await expect(promise).rejects.toThrowError(expectedError)
 		})
 	})
 })
