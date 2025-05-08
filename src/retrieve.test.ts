@@ -137,20 +137,36 @@ describe('retrieve', () => {
 					new URL('http://example.org?query=first-value&query=second-value'),
 				],
 				[
-					'relative URL path as string + path with leading slash',
+					'http://example.org/api/v1/ + /path',
 					{
 						url: '/path',
-						baseUrl: 'http://example.org',
+						baseUrl: 'http://example.org/api/v1/',
 					},
 					new URL('http://example.org/path'),
 				],
 				[
-					'relative URL path as string + path without leading slash',
+					'http://example.org/api/v1/ + path',
 					{
 						url: 'path',
-						baseUrl: 'http://example.org',
+						baseUrl: 'http://example.org/api/v1/',
+					},
+					new URL('http://example.org/api/v1/path'),
+				],
+				[
+					'http://example.org/api/v1 + /path',
+					{
+						url: '/path',
+						baseUrl: 'http://example.org/api/v1',
 					},
 					new URL('http://example.org/path'),
+				],
+				[
+					'http://example.org/api/v1 + path',
+					{
+						url: 'path',
+						baseUrl: 'http://example.org/api/v1',
+					},
+					new URL('http://example.org/api/path'),
 				],
 			])('%s', async (_title, config, expectedInput) => {
 				expect.assertions(2)
