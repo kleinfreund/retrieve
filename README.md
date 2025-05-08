@@ -142,7 +142,7 @@ The request URL.
 - `URL`: Will be used as-is.
 - `string`:
 	- Absolute URL string: Will be used as-is.
-	- Relative URL path string: Will be turned into an absolute URL (using `config.baseUrl`).
+	- Relative URL path string: Will be turned into an absolute URL using `new URL(config.url, config.baseUrl)` (see also [MDN: Resolving relative references to a URL](https://developer.mozilla.org/en-US/docs/Web/API/URL_API/Resolving_relative_references)).
 
 **Note**: Providing a `Request` object to `config.url` is intentionally not possible. If you want to use a `Request` object, provide it _instead_ of `configOrRequest` (see [request](#request)).
 

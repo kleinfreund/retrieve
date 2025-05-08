@@ -8,7 +8,7 @@ export interface RetrieveConfig<Success = unknown, Failure = unknown> {
 	 * - `URL`: Will be used as-is.
 	 * - `string`:
 	 *   - Absolute URL string: Will be used as-is.
-	 *   - Relative URL path string: Will be turned into an absolute URL (using `config.baseUrl`).
+	 *   - Relative URL path string: Will be turned into an absolute URL using `new URL(config.url, config.baseUrl)` (see also [MDN: Resolving relative references to a URL](https://developer.mozilla.org/en-US/docs/Web/API/URL_API/Resolving_relative_references)).
 	 */
 	url: string | URL
 
