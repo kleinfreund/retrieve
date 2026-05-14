@@ -1,15 +1,16 @@
-import eslint from '@eslint/js'
+import { defineConfig, globalIgnores } from 'eslint/config'
+import js from '@eslint/js'
 import stylistic from '@stylistic/eslint-plugin'
 import globals from 'globals'
 import tseslint from 'typescript-eslint'
 
-export default tseslint.config(
-	{
-		ignores: ['coverage/', 'dist/'],
-	},
-	eslint.configs.recommended,
-	...tseslint.configs.strict,
-	...tseslint.configs.stylistic,
+export default defineConfig(
+	globalIgnores(['coverage/', 'dist/']),
+
+	js.configs.recommended,
+	tseslint.configs.strict,
+	tseslint.configs.stylistic,
+
 	{
 		languageOptions: {
 			globals: {
