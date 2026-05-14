@@ -8,7 +8,6 @@ This package’s files are distributed in the ES module format and have not been
 
 **Links**:
 
-- [demo](https://retrieve.netlify.app)
 - [**npmjs.com**/package/retrieve](https://www.npmjs.com/package/retrieve)
 - [**github.com**/kleinfreund/retrieve](https://github.com/kleinfreund/retrieve)
 	- [code of conduct](https://github.com/kleinfreund/retrieve/blob/main/CODE_OF_CONDUCT.md)
