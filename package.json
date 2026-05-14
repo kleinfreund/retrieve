@@ -60,7 +60,7 @@
 		},
 		"packageManager": {
 			"name": "npm",
-			"version": "^10.9.8"
+			"version": "^10.9.8 || ^11.12.1"
 		}
 	},
 	"devDependencies": {
