@@ -242,7 +242,7 @@ const CONTENT_TYPES: Record<BodyType, string> = {
 }
 
 /**
- * Takes a {@link RetrieveConfig} or {@link Request} object and makes a network request using {@link global.fetch}.
+ * Takes a {@link RetrieveConfig} or {@link Request} object and makes a network request using {@link fetch}.
  *
  * When providing a `RetrieveConfig`, several preprocessing steps are performed before creating a `Request` object. That `Request` object (and the `RequestInit` object that was used to create it) is then passed to `config.beforeRequestHandlers` before it's ultimately passed to `fetch`.
  *
