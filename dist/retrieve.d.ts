@@ -42,7 +42,7 @@ interface RetrieveConfig<Success = unknown, Failure = unknown> {
      * - `URL`: Will be used as-is.
      * - `string`:
      *   - Absolute URL string: Will be used as-is.
-     *   - Relative URL path string: Will be turned into an absolute URL (using `config.baseUrl`).
+     *   - Relative URL path string: Will be turned into an absolute URL using `new URL(config.url, config.baseUrl)` (see also [MDN: Resolving relative references to a URL](https://developer.mozilla.org/en-US/docs/Web/API/URL_API/Resolving_relative_references)).
      */
     url: string | URL;
     /**
@@ -64,7 +64,7 @@ interface RetrieveConfig<Success = unknown, Failure = unknown> {
      *
      * - **Headers**: If no “content-type” header is set, it is determined automatically where appropriate:
      *
-     *   - “application/octet-stream” if `config.data` is an `ArrayBuffer` of `Blob` object
+     *   - “application/octet-stream” if `config.data` is an `ArrayBuffer` or `Blob` object
      *   - “text/plain” if `config.data` is a string
      *   - “application/json” if `config.data` is set and the request method isn't GET or HEAD
      *
@@ -236,7 +236,7 @@ type RequestErrorHandler = Interceptor<(error: Error, request: Request, init: No
 type ResponseSuccessHandler<Success> = Interceptor<(retrieveResponse: RetrieveResponse<Success>, init: NormalizedRequestInit) => RetrieveResponse<Success>>;
 type ResponseErrorHandler<Success, Failure> = Interceptor<(error: ResponseError<Failure>, retrieveResponse: RetrieveResponse<Failure>, init: NormalizedRequestInit) => RetrieveResponse<Success> | Response | ResponseError<Failure>>;
 /**
- * Takes a `RetrieveConfig` or `Request` object and makes a network request using `fetch`.
+ * Takes a {@link RetrieveConfig} or {@link Request} object and makes a network request using {@link fetch}.
  *
  * When providing a `RetrieveConfig`, several preprocessing steps are performed before creating a `Request` object. That `Request` object (and the `RequestInit` object that was used to create it) is then passed to `config.beforeRequestHandlers` before it's ultimately passed to `fetch`.
  *

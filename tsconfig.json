@@ -1,18 +1,13 @@
 {
+	"include": ["src/**/*"],
 	"compilerOptions": {
-		"baseUrl": ".",
-		"rootDir": ".",
 		"outDir": "dist",
 		"sourceMap": false,
 		"noEmit": true,
-		"target": "es2022",
-		"module": "node16",
-		"moduleResolution": "node16",
-		"lib": [
-			"dom",
-			"dom.iterable",
-			"es2022"
-		],
+		"target": "ES2024",
+		"module": "Node16",
+		"moduleResolution": "Node16",
+		"lib": ["ES2024", "DOM", "DOM.Iterable"],
 		"allowUnreachableCode": false,
 		"noImplicitAny": true,
 		"noImplicitReturns": true,
@@ -23,8 +18,5 @@
 		"strict": true,
 		"strictNullChecks": true,
 		"types": []
-	},
-	"include": [
-		"./src/**/*.ts"
-	]
+	}
 }
