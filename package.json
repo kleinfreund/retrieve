@@ -53,6 +53,16 @@
 		"prepare": "husky",
 		"prepublishOnly": "npm run build"
 	},
+	"devEngines": {
+		"runtime": {
+			"name": "node",
+			"version": "^22.22.3"
+		},
+		"packageManager": {
+			"name": "npm",
+			"version": "^10.9.8"
+		}
+	},
 	"devDependencies": {
 		"@commitlint/cli": "^21.0.1",
 		"@commitlint/config-conventional": "^21.0.1",
